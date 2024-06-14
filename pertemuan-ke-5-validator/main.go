@@ -4,6 +4,7 @@ import (
 	"log"
 	"praisindo/entity"
 	"praisindo/handler"
+	"praisindo/repository/slice"
 	"praisindo/router"
 	"praisindo/service"
 
@@ -17,8 +18,6 @@ func main() {
 	// // setup service
 	var mockUserDBInSlice []entity.User
 	userRepo := slice.NewUserRepository(mockUserDBInSlice)
-	//userRepo := sqlServer.NewUserRepository(mockUserDBInSlice)
-	//userRepo := postegree.NewUserRepository(mockUserDBInSlice)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
