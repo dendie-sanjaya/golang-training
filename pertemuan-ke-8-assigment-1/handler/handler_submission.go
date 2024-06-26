@@ -53,19 +53,29 @@ func (h *SubmissionHandler) CreateSubmission(c *gin.Context) {
 
 // GetSubmission menghandle permintaan untuk mendapatkan Submission berdasarkan ID
 func (h *SubmissionHandler) GetSubmission(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
-		return
+
+	if c.Query("user_id") != "" {
+		user_id, err := strconv.Atoi(c.Query("user_id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID xxx"})
+			return
+		}
+
+		Submission, err := h.submissionService.GetSubmissionsByID(c.Request.Context(), user_id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, Submission)
+	} else {
+		Submission, err := h.submissionService.GetAllSubmissions(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, Submission)
 	}
 
-	Submission, err := h.submissionService.GetSubmissionsByID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Submission not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, Submission)
 }
 
 // DeleteSubmission menghandle permintaan untuk menghapus Submission

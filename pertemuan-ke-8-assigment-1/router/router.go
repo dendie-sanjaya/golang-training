@@ -32,8 +32,8 @@ func SetupRouter(r *gin.Engine, userHandler handler.IUserHandler, submissionHand
 
 	// Mengatur endpoint publik untuk submission
 	submissionsPublicEndpoint := r.Group("/submissions")
-	submissionsPublicEndpoint.GET("/id", submissionHandler.GetSubmission)
-	submissionsPublicEndpoint.GET("/", submissionHandler.GetAllSubmission)
+	submissionsPublicEndpoint.GET("/", submissionHandler.GetSubmission)
+	submissionsPublicEndpoint.GET("", submissionHandler.GetSubmission)
 
 	// Rute untuk mendapatkan pengguna berdasarkan ID
 	submissionsPrivateEndpoint := r.Group("/submissions")

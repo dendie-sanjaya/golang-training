@@ -48,7 +48,7 @@ func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int) (ent
 	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
 	user, err := s.SubmissionRepo.GetSubmissionsByID(ctx, id)
 	if err != nil {
-		return entity.Submission{}, fmt.Errorf("gagal mendapatkan submission berdasarkan ID: %v", err)
+		return entity.Submission{}, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
 	}
 	return user, nil
 }

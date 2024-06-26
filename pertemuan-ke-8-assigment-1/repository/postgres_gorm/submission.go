@@ -56,6 +56,7 @@ func (r *submissionRespository) DeleteSubmissions(ctx context.Context, id int) e
 
 // GetAllSubmissions mengambil semua pengguna dari basis data
 func (r *submissionRespository) GetAllSubmissions(ctx context.Context) ([]entity.Submission, error) {
+	fmt.Print("masuk ke GetAllSubmissions gorm submission \n ")
 	var users []entity.Submission
 	if err := r.db.WithContext(ctx).Select("id", "user_id", "answers", "risk_score", "risk_category", "created_at", "updated_at").Find(&users).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -71,11 +72,13 @@ func (r *submissionRespository) GetAllSubmissions(ctx context.Context) ([]entity
 func (r *submissionRespository) GetSubmissionsByID(ctx context.Context, id int) (entity.Submission, error) {
 	fmt.Print("masuk ke GetUserByID gorm \n ")
 	var user entity.Submission
-	if err := r.db.WithContext(ctx).Select("id", "user_id", "answares", "risk_score", "risk_category", "name", "email", "created_at", "updated_at").First(&user, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Select("id", "user_id", "answers", "risk_score", "risk_category", "created_at", "updated_at").
+		Where("user_id = ?", id).
+		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entity.Submission{}, err
 		}
-		log.Printf("Error getting user by ID: %v\n", err)
+		log.Printf("Error getting user by User ID: %v\n", err)
 		return entity.Submission{}, err
 	}
 	return user, nil
