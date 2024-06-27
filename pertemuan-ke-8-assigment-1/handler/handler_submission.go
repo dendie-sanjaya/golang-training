@@ -88,12 +88,19 @@ func (h *SubmissionHandler) GetSubmission(c *gin.Context) {
 			return
 		}
 
+		SubmissionTotal, err := h.submissionService.GetSubmissionsByIDTotal(c.Request.Context(), user_id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
 		var res getAllSubmissionResponse
 		res.Code = 200
 		res.UserId = user_id
 		res.Page = offset
 		res.Limit = limit
-		res.Total_pages = 2
+		res.Total_submissions = int(SubmissionTotal)
+		res.Total_pages = int(SubmissionTotal) / limit
 		res.Submission = Submission
 
 		c.JSON(http.StatusOK, res)

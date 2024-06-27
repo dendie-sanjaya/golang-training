@@ -12,6 +12,7 @@ type ISubmissionService interface {
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
 	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
+	GetSubmissionsByIDTotal(ctx context.Context, id int) (totaSubmission int64, error error)
 }
 
 // ISubmissionRepository mendefinisikan interface untuk repository pengguna
@@ -20,6 +21,7 @@ type ISubmissionRepository interface {
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
 	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
+	GetSubmissionsByIDTotal(ctx context.Context, id int) (totaSubmission int64, error error)
 }
 
 // submissionService adalah implementasi dari ISubmissionService yang menggunakan ISubmissionRepository
@@ -72,7 +74,18 @@ func NewSubmissionService(userRepo ISubmissionRepository) ISubmissionService {
 // GetUserByID mendapatkan pengguna berdasarkan ID
 func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int, limit int, offset int) ([]entity.SubmissionData, error) {
 	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
+	fmt.Print("masuk ke GetSubmissionsByID gorm submission service \n ")
 	user, err := s.SubmissionRepo.GetSubmissionsByID(ctx, id, limit, offset)
+	if err != nil {
+		return user, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
+	}
+	return user, nil
+}
+
+func (s *submissionService) GetSubmissionsByIDTotal(ctx context.Context, id int) (TotaSubmission int64, error error) {
+	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
+	fmt.Print("masuk ke GetSubmissionsByID gorm submission service  total \n ")
+	user, err := s.SubmissionRepo.GetSubmissionsByIDTotal(ctx, id)
 	if err != nil {
 		return user, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
 	}

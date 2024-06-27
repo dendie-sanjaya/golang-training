@@ -94,3 +94,21 @@ func (r *submissionRespository) GetSubmissionsByID(ctx context.Context, id int, 
 
 	return user, nil
 }
+
+func (r *submissionRespository) GetSubmissionsByIDTotal(ctx context.Context, id int) (TotaSubmission int64, error error) {
+	fmt.Print("masuk ke GetUserByID gorm  total submistion \n ")
+	var total int64
+	if err := r.db.WithContext(ctx).Table("submissions").
+		Where("user_id = ?", id).
+		Count(&total).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return total, err
+		}
+		log.Printf("Error getting user by User ID: %v\n", err)
+		return total, err
+	}
+
+	fmt.Print("Total Submission : ", total)
+
+	return total, nil
+}
