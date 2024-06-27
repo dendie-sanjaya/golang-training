@@ -77,11 +77,13 @@ func (r *submissionRespository) GetAllSubmissions(ctx context.Context) ([]entity
 }
 
 // GetUserByID mengambil pengguna berdasarkan ID
-func (r *submissionRespository) GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error) {
+func (r *submissionRespository) GetSubmissionsByID(ctx context.Context, id int, limit int, offset int) ([]entity.SubmissionData, error) {
 	fmt.Print("masuk ke GetUserByID gorm  1 \n ")
 	var user []entity.SubmissionData
 	if err := r.db.WithContext(ctx).Table("submissions").Select("id", "user_id", "answers", "risk_score", "risk_category", "created_at", "updated_at").
 		Where("user_id = ?", id).
+		Limit(limit).
+		Offset(offset).
 		Find(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return user, err

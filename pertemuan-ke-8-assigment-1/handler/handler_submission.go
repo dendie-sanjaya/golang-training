@@ -75,12 +75,14 @@ func (h *SubmissionHandler) GetSubmission(c *gin.Context) {
 
 	if c.Query("user_id") != "" {
 		user_id, err := strconv.Atoi(c.Query("user_id"))
+		limit, err := strconv.Atoi(c.Query("limit"))
+		offset, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID xxx"})
 			return
 		}
 
-		Submission, err := h.submissionService.GetSubmissionsByID(c.Request.Context(), user_id)
+		Submission, err := h.submissionService.GetSubmissionsByID(c.Request.Context(), user_id, limit, offset)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
@@ -89,8 +91,8 @@ func (h *SubmissionHandler) GetSubmission(c *gin.Context) {
 		var res getAllSubmissionResponse
 		res.Code = 200
 		res.UserId = user_id
-		res.Page = 1
-		res.Limit = 2
+		res.Page = offset
+		res.Limit = limit
 		res.Total_pages = 2
 		res.Submission = Submission
 

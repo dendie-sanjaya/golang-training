@@ -8,7 +8,7 @@ import (
 
 // ISubmissionService mendefinisikan interface untuk layanan pengguna
 type ISubmissionService interface {
-	GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error)
+	GetSubmissionsByID(ctx context.Context, id int, limit int, offset int) ([]entity.SubmissionData, error)
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
 	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
@@ -16,7 +16,7 @@ type ISubmissionService interface {
 
 // ISubmissionRepository mendefinisikan interface untuk repository pengguna
 type ISubmissionRepository interface {
-	GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error)
+	GetSubmissionsByID(ctx context.Context, id int, limit int, offset int) ([]entity.SubmissionData, error)
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
 	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
@@ -70,9 +70,9 @@ func NewSubmissionService(userRepo ISubmissionRepository) ISubmissionService {
 }
 
 // GetUserByID mendapatkan pengguna berdasarkan ID
-func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error) {
+func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int, limit int, offset int) ([]entity.SubmissionData, error) {
 	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
-	user, err := s.SubmissionRepo.GetSubmissionsByID(ctx, id)
+	user, err := s.SubmissionRepo.GetSubmissionsByID(ctx, id, limit, offset)
 	if err != nil {
 		return user, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
 	}
