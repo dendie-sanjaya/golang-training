@@ -25,6 +25,26 @@ type SubmissionHandler struct {
 	submissionService service.ISubmissionService
 }
 
+type getAllSubmissionData struct {
+	ID           string          `json:"ID"`            // ID pengguna sebagai primary key
+	UserId       int             `json:"user_id"`       // Kata sandi pengguna (wajib diisi)
+	Answer       []entity.Answer `json:"answer"`        // Kata sandi pengguna (wajib diisi)
+	RiskScore    int             `json:"risk_scrore"`   // Kata sandi pengguna (wajib diisi)
+	RiskCategory string          `json:"risk_category"` // Kata sandi pengguna (wajib diisi)
+	CreatedAt    time.Time       `json:"created_at"`    // Waktu pembuatan pengguna
+	UpdatedAt    time.Time       `json:"updated_at"`    // Waktu pembaruan terakhir pengguna
+}
+
+type getAllSubmissionResponse struct {
+	UserId            int                     `json:"user_id"`
+	Page              int                     `json:"page"`
+	Limit             int                     `json:"limit`
+	Total_submissions int                     `json:"total_submissions"`
+	Total_pages       int                     `json:"total_pages"`
+	Submission        []entity.SubmissionData `json:"submissions"`
+	Code              int                     `json:"code"`
+}
+
 // NewSubmissionHandler membuat instance baru dari SubmissionHandler
 func NewSubmissionHandler(submissionService service.ISubmissionService) ISubmissionHandler {
 	return &SubmissionHandler{
@@ -65,13 +85,23 @@ func (h *SubmissionHandler) GetSubmission(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, Submission)
+
+		var res getAllSubmissionResponse
+		res.Code = 200
+		res.UserId = user_id
+		res.Page = 1
+		res.Limit = 2
+		res.Total_pages = 2
+		res.Submission = Submission
+
+		c.JSON(http.StatusOK, res)
 	} else {
 		Submission, err := h.submissionService.GetAllSubmissions(c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(http.StatusOK, Submission)
 	}
 
@@ -93,43 +123,16 @@ func (h *SubmissionHandler) DeleteSubmission(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted"})
 }
 
-type getAllSubmissionData struct {
-	ID           string          `json:"ID"`            // ID pengguna sebagai primary key
-	UserId       int             `json:"user_id"`       // Kata sandi pengguna (wajib diisi)
-	Answer       []entity.Answer `json:"answer"`        // Kata sandi pengguna (wajib diisi)
-	RiskScore    int             `json:"risk_scrore"`   // Kata sandi pengguna (wajib diisi)
-	RiskCategory string          `json:"risk_category"` // Kata sandi pengguna (wajib diisi)
-	CreatedAt    time.Time       `json:"created_at"`    // Waktu pembuatan pengguna
-	UpdatedAt    time.Time       `json:"updated_at"`    // Waktu pembaruan terakhir pengguna
-}
-
-type getAllSubmissionResponse struct {
-	Data    []getAllSubmissionData `json:"Submissions`
-	Message string
-	Code    int
-}
-
 // GetAllSubmissions menghandle permintaan untuk mendapatkan semua Submission
 func (h *SubmissionHandler) GetAllSubmission(c *gin.Context) {
-	fmt.Print("Masuk ke GetAllSubmissions")
+	fmt.Print("Masuk ke GetAllSubmissions xxxx")
 	Submissions, err := h.submissionService.GetAllSubmissions(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var res getAllSubmissionResponse
-	for _, u := range Submissions {
-		res.Data = append(res.Data, getAllSubmissionData{
-			ID:           strconv.Itoa(u.ID),
-			UserId:       u.UserId,
-			Answer:       u.Answers,
-			RiskScore:    u.RiskScore,
-			RiskCategory: u.RiskCategory,
-		})
-	}
-	res.Code = 200
-	res.Message = "Sukses mendapatkan semua pengguna"
-	c.JSON(http.StatusOK, res)
+
+	c.JSON(http.StatusOK, Submissions)
 }
 
 func convertSubmissionMandatoryFieldErrorString(oldErrorMsg string) string {

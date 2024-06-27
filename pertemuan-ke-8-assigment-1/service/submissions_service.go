@@ -8,18 +8,18 @@ import (
 
 // ISubmissionService mendefinisikan interface untuk layanan pengguna
 type ISubmissionService interface {
-	GetSubmissionsByID(ctx context.Context, id int) (entity.Submission, error)
+	GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error)
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
-	GetAllSubmissions(ctx context.Context) ([]entity.Submission, error)
+	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
 }
 
 // ISubmissionRepository mendefinisikan interface untuk repository pengguna
 type ISubmissionRepository interface {
-	GetSubmissionsByID(ctx context.Context, id int) (entity.Submission, error)
+	GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error)
 	CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error)
 	DeleteSubmissions(ctx context.Context, id int) error
-	GetAllSubmissions(ctx context.Context) ([]entity.Submission, error)
+	GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error)
 }
 
 // submissionService adalah implementasi dari ISubmissionService yang menggunakan ISubmissionRepository
@@ -70,11 +70,11 @@ func NewSubmissionService(userRepo ISubmissionRepository) ISubmissionService {
 }
 
 // GetUserByID mendapatkan pengguna berdasarkan ID
-func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int) (entity.Submission, error) {
+func (s *submissionService) GetSubmissionsByID(ctx context.Context, id int) ([]entity.SubmissionData, error) {
 	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
 	user, err := s.SubmissionRepo.GetSubmissionsByID(ctx, id)
 	if err != nil {
-		return entity.Submission{}, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
+		return user, fmt.Errorf("gagal mendapatkan submission berdasarkan user id: %v", err)
 	}
 	return user, nil
 }
@@ -245,7 +245,7 @@ func (s *submissionService) DeleteSubmissions(ctx context.Context, id int) error
 }
 
 // GetAllUsers mendapatkan semua pengguna
-func (s *submissionService) GetAllSubmissions(ctx context.Context) ([]entity.Submission, error) {
+func (s *submissionService) GetAllSubmissions(ctx context.Context) ([]entity.SubmissionData, error) {
 	// Memanggil GetAllUsers dari repository untuk mendapatkan semua pengguna
 	users, err := s.SubmissionRepo.GetAllSubmissions(ctx)
 	if err != nil {
