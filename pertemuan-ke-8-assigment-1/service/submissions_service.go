@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"praisindo/entity"
 )
@@ -37,6 +36,33 @@ type Option struct {
 	Answer string
 	Weight int
 }
+
+type Answer struct {
+	QuestionID int
+	Answer     string
+}
+
+type answareJSON struct {
+	user_od int
+	Answers []Answer
+}
+
+type ProfileRisk struct {
+	MinScore   int
+	MaxScore   int
+	Category   ProfileRiskCategory
+	Definition string
+}
+
+type ProfileRiskCategory string
+
+const (
+	ProfileRiskCategoryConservative ProfileRiskCategory = "Conservative"
+	ProfileRiskCategoryModerate     ProfileRiskCategory = "Moderate"
+	ProfileRiskCategoryBalanced     ProfileRiskCategory = "Balanced"
+	ProfileRiskCategoryGrowth       ProfileRiskCategory = "Growth"
+	ProfileRiskCategoryAggresive    ProfileRiskCategory = "Aggresive"
+)
 
 // NewsubmissionService membuat instance baru dari submissionService
 func NewSubmissionService(userRepo ISubmissionRepository) ISubmissionService {
@@ -145,20 +171,67 @@ func (s *submissionService) CreateSubmissions(ctx context.Context, user *entity.
 			},
 		},
 	}
-
-	updatedUser, err := s.SubmissionRepo.CreateSubmissions(ctx, user)
-	//userJSON, err := json.Marshal(user)
-
-	for _, list_answare := range updatedUser.Answers {
-		answareJSON, _ := json.Marshal(list_answare)
-		fmt.Println(string(answareJSON))
+	var total_weight int
+	for _, list_answare := range user.Answers {
+		for _, list_questions := range Questions {
+			if list_answare.QuestionID == list_questions.ID {
+				for _, list_questions_option := range list_questions.Options {
+					if list_answare.Answer == list_questions_option.Answer {
+						total_weight = total_weight + list_questions_option.Weight
+					}
+				}
+			}
+		}
 	}
-	fmt.Print(Questions)
+	user.RiskScore = total_weight
 
-	if err != nil {
-		return entity.Submission{}, fmt.Errorf("gagal menambbah: %v", err)
+	var RiskMapping = []ProfileRisk{
+		{
+			MinScore: 0,
+			MaxScore: 11,
+			Category: ProfileRiskCategoryConservative,
+			Definition: "Tujuan utama Anda adalah untuk melindungi modal/dana yang ditempatkan dan Anda tidak memiliki toleransi " +
+				"sama sekali terhadap perubahan harga/nilai dari dana investasinya tersebut. " +
+				"Anda memiliki pengalaman yang sangat terbatas atau tidak memiliki pengalaman sama sekali mengenai produk investasi.",
+		},
+		{
+			MinScore:   12,
+			MaxScore:   19,
+			Category:   ProfileRiskCategoryModerate,
+			Definition: "Anda memiliki toleransi yang rendah dengan perubahan harga/nilai dari dana investasi dan risiko investasi.",
+		},
+		{
+			MinScore: 20,
+			MaxScore: 28,
+			Category: ProfileRiskCategoryBalanced,
+			Definition: "Anda memiliki toleransi yang cukup terhadap produk investasi dan dapat menerima perubahan yang besar dari " +
+				"harga/nilai dari harga yang diinvestasikan.",
+		},
+		{
+			MinScore: 29,
+			MaxScore: 35,
+			Category: ProfileRiskCategoryGrowth,
+			Definition: "Anda memiliki toleransi yang cukup tinggi dan dapat menerima perubahan yang besar dari harga/nilai portfolio" +
+				"pada produk investasi yang diinvestasikan." +
+				"Pada umumnya Anda sudah pernah atau berpengalaman dalam berinvestasi di produk investasi.",
+		},
+		{
+			MinScore: 36,
+			MaxScore: 40,
+			Category: ProfileRiskCategoryAggresive,
+			Definition: "Anda sangat berpengalaman terhadap produk investasi dan memiliki toleransi yang sangat tinggi atas" +
+				"produk-produk investasi. Anda bahkan dapat menerima perubahan signifikan pada modal/nilai investasi." +
+				"Pada umumnya portfolio Anda sebagian besar dialokasikan pada produk investasi.",
+		},
 	}
-	return updatedUser, nil
+
+	for _, list_risk_mapping := range RiskMapping {
+		if total_weight >= list_risk_mapping.MinScore && total_weight <= list_risk_mapping.MaxScore {
+			user.RiskCategory = string(list_risk_mapping.Category)
+		}
+	}
+
+	return s.SubmissionRepo.CreateSubmissions(ctx, user)
 }
 
 // DeleteUser menghapus pengguna berdasarkan ID

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -97,7 +96,7 @@ func (h *SubmissionHandler) DeleteSubmission(c *gin.Context) {
 type getAllSubmissionData struct {
 	ID           string          `json:"ID"`            // ID pengguna sebagai primary key
 	UserId       int             `json:"user_id"`       // Kata sandi pengguna (wajib diisi)
-	Answer       json.RawMessage `json:"answer"`        // Kata sandi pengguna (wajib diisi)
+	Answer       []entity.Answer `json:"answer"`        // Kata sandi pengguna (wajib diisi)
 	RiskScore    int             `json:"risk_scrore"`   // Kata sandi pengguna (wajib diisi)
 	RiskCategory string          `json:"risk_category"` // Kata sandi pengguna (wajib diisi)
 	CreatedAt    time.Time       `json:"created_at"`    // Waktu pembuatan pengguna

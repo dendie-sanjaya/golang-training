@@ -2,6 +2,7 @@ package postgres_gorm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -37,7 +38,14 @@ func (r *submissionRespository) GetUserByID(ctx context.Context, id int) (entity
 // CreateUser membuat pengguna baru dalam basis data
 func (r *submissionRespository) CreateSubmissions(ctx context.Context, user *entity.Submission) (entity.Submission, error) {
 	fmt.Print("masuk ke CreateUser gorm submission \n ")
-	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
+	answare_json, _ := json.Marshal(user.Answers)
+	submissionData := &entity.SubmissionData{
+		UserId:       user.UserId,
+		Answers:      answare_json,
+		RiskScore:    user.RiskScore,
+		RiskCategory: user.RiskCategory,
+	}
+	if err := r.db.WithContext(ctx).Table("submissions").Create(submissionData).Error; err != nil {
 		log.Printf("Error creating user: %v\n", err)
 		return entity.Submission{}, err
 	}
@@ -71,15 +79,23 @@ func (r *submissionRespository) GetAllSubmissions(ctx context.Context) ([]entity
 // GetUserByID mengambil pengguna berdasarkan ID
 func (r *submissionRespository) GetSubmissionsByID(ctx context.Context, id int) (entity.Submission, error) {
 	fmt.Print("masuk ke GetUserByID gorm \n ")
-	var user entity.Submission
-	if err := r.db.WithContext(ctx).Select("id", "user_id", "answers", "risk_score", "risk_category", "created_at", "updated_at").
+	var user entity.SubmissionData
+	if err := r.db.WithContext(ctx).Table("submissions").Select("id", "user_id", "answers", "risk_score", "risk_category", "created_at", "updated_at").
 		Where("user_id = ?", id).
-		First(&user).Error; err != nil {
+		Find(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entity.Submission{}, err
 		}
 		log.Printf("Error getting user by User ID: %v\n", err)
 		return entity.Submission{}, err
 	}
-	return user, nil
+
+	//answare_json_decode, _ := json.Marshal(user.Answers)
+	// submission := &entity.Submission{
+	// 	UserId:       user.UserId,
+	// 	RiskScore:    user.RiskScore,
+	// 	RiskCategory: user.RiskCategory,
+	// }
+	// var subbmision entity.Submission
+	return entity.Submission{}, nil
 }
