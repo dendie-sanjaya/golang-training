@@ -29,3 +29,5 @@ type SubmissionData struct {
 	CreatedAt    time.Time       `json:"created_at"`                        // Waktu pembuatan pengguna
 	UpdatedAt    time.Time       `json:"updated_at"`                        // Waktu pembaruan terakhir pengguna
 }
+
+type ProfileRiskCategory string
