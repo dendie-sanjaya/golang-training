@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+package helloworld;
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc SayHello2 (HelloRequest) returns (HelloReply) {}
+
+}
+
+message HelloRequest {
+  string name = 1; // Nama pengguna
+}
+
+message HelloReply {
+  string message = 1; // Pesan greeting
+}
+
+message Result {
+  string url = 1;
+  string title = 2;
+  repeated string snippets = 3;
+}

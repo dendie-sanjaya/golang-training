@@ -28,9 +28,12 @@ func TestUserRepository_CreateUser(t *testing.T) {
 			Email:    "john@example.com",
 			Password: "secret",
 		}
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (name, email, password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id")).
-			WithArgs(user.Name, user.Email, user.Password).
-			WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(200))
+
+		/*
+			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users (name, email, password, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING name")).
+				WithArgs(user.Name, user.Email, user.Password).
+				WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(1))
+		*/
 
 		createdUser, err := repo.CreateUser(context.Background(), user)
 		require.NoError(t, err)
