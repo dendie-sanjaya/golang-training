@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+option go_package = "praisindo/proto;user_wallet";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+package proto.user_wallet_service.v1;
+
+service UserWalletService {
+  rpc Topup (TopupRequest) returns (TopupResponse) {
+    option (google.api.http) = {
+      get: "/v1/topup"
+    };
+  }
+  rpc Transfer (TransferRequest) returns (TransferResponse) {
+    option (google.api.http) = {
+      get: "/v1/transfer"
+    };
+  }
+  rpc GetUserBalance (GetUserBalanceRequest) returns (GetUserBalanceResponse) {
+    option (google.api.http) = {
+      post: "/v1/getUserBalance/{id}",
+      body: "*"
+    };
+  }
+  rpc GetTransactionHistory (GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse) {
+    option (google.api.http) = {
+      put: "/v1/getTransactionHistory",
+      body: "*"
+    };
+  }
+}
+
+message HistoryTransaction {
+  int32 id = 1;
+  int32 user_id_from = 2;
+  int32 user_id_to = 3;
+  string type_transaction = 4;   
+  string type_credit = 5;
+  string total = 6;
+  google.protobuf.Timestamp created_at = 7; 
+}
+
+message TopupRequest {
+  int32 id = 1;
+  int32 amount = 2;
+} 
+
+message TopupResponse {
+  HistoryTransaction history = 1;
+}
+
+message TransferRequest {
+  int32 id = 1;
+  float from = 2;
+  float to = 3;
+  int32 amount = 4;
+}
+
+message TransferResponse {
+  repeated HistoryTransaction history = 1;
+}
+
+message GetUserBalanceRequest {
+  string id = 1; // Menambahkan field id
+}
+
+message GetUserBalanceResponse {
+  int32 user_id = 1;
+  int32 saldo = 2;;
+  google.protobuf.Timestamp created_at = 3; 
+}
+
+message GetTransactionHistoryRequest {
+  int32 user_id = 1;
+}
+
+message GetTransactionHistoryResponse {
+  repeated HistoryTransaction history = 1;
+}
