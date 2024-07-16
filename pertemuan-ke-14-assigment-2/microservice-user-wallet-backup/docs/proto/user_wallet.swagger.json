@@ -59,8 +59,7 @@
             "description": "Menambahkan field id",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "body",
@@ -99,8 +98,8 @@
             "name": "amount",
             "in": "query",
             "required": false,
-            "type": "number",
-            "format": "float"
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -131,22 +130,22 @@
             "name": "from",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "number",
+            "format": "float"
           },
           {
             "name": "to",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "number",
+            "format": "float"
           },
           {
             "name": "amount",
             "in": "query",
             "required": false,
-            "type": "number",
-            "format": "float"
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -185,8 +184,8 @@
           "format": "int32"
         },
         "saldo": {
-          "type": "number",
-          "format": "float"
+          "type": "integer",
+          "format": "int32"
         },
         "createdAt": {
           "type": "string",
@@ -216,8 +215,7 @@
           "type": "string"
         },
         "total": {
-          "type": "number",
-          "format": "float"
+          "type": "string"
         },
         "createdAt": {
           "type": "string",
@@ -236,11 +234,12 @@
     "proto.user_wallet_service.v1.TransferResponse": {
       "type": "object",
       "properties": {
-        "history1": {
-          "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
-        },
-        "history2": {
-          "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+          }
         }
       }
     },
