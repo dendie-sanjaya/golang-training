@@ -104,6 +104,8 @@ func (s *userService) DeleteUser(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("gagal menghapus pengguna: %v", err)
 	}
+
+	s.rdb.Del(ctx, fmt.Sprintf("createdUser:%d", id))
 	return nil
 }
 
