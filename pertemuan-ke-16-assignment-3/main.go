@@ -30,8 +30,8 @@ func main() {
 	shortUrlRepo := postgres_gorm.NewshortUrlRepository(gormDB)
 	shortUrlService := service.NewShortUrlService(shortUrlRepo, rdb)
 
-	//rst, _ := shortUrlService.CreateShortUrl("https://detik.com/id/u/mengkonversi/detik/ke/bulan#7776000")
-	fmt.Println(rst1)
+	rst, _ := shortUrlService.CreateShortUrl("https://detik.com/id/u/mengkonversi/detik/ke/bulan#7776000")
+	fmt.Println(rst)
 	rst2, _ := shortUrlService.GetShortUrl("dWgXDZ")
 	fmt.Println(rst2)
 

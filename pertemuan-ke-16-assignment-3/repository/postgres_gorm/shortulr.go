@@ -15,12 +15,10 @@ type shortUrlRepository struct {
 	db *gorm.DB
 }
 
-// func NewshortUrlRepository(db GormDBIface) service.IUserRepository {
 func NewshortUrlRepository(db *gorm.DB) service.IShortUrlRepository {
 	return &shortUrlRepository{db: db}
 }
 
-// func (r *shortUrl) CreateShorUrl(ctx context.Context, p_urllong string) (entity.ShortUrl, error) {
 func (r *shortUrlRepository) CreateShortUrl(p_urllong string) (entity.ShortUrl, error) {
 
 	fmt.Print("masuk ke create short url  gorm \n ")
@@ -38,7 +36,6 @@ func (r *shortUrlRepository) CreateShortUrl(p_urllong string) (entity.ShortUrl, 
 	return urlShort, nil
 }
 
-// func (r *shortUrlRepository) GetUShortUrl(ctx context.Context, id int) (entity.ShortUrl, error) {
 func (r *shortUrlRepository) GetShortUrl(p_shortUrl string) (entity.ShortUrl, error) {
 	//func (r *shortUrlRepository) GetUShortUrl(id int) (entity.ShortUrl, error) {
 	fmt.Print("masuk ke get longsorturl gorm \n ")
