@@ -1,6 +1,10 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 	"praisindo/entity"
 
 	"github.com/redis/go-redis/v9"
@@ -10,8 +14,6 @@ type IShortUrlService interface {
 	CreateShortUrl(p_urllong string) (entity.ShortUrl, error)
 	GetShortUrl(p_shortUrl string) (entity.ShortUrl, error)
 }
-
-// IUserRepository mendefinisikan interface untuk repository pengguna
 
 type IShortUrlRepository interface {
 	CreateShortUrl(p_urllong string) (entity.ShortUrl, error)
@@ -24,56 +26,56 @@ type shortUrlService struct {
 	rdb          *redis.Client
 }
 
-// NewUserService membuat instance baru dari userService
 func NewShortUrlService(shortUrlRepo IShortUrlRepository, rdb *redis.Client) IShortUrlService {
 	return &shortUrlService{shortUrlRepo: shortUrlRepo, rdb: rdb}
 }
 
-// CreateUser membuat pengguna baru
 func (s *shortUrlService) CreateShortUrl(p_urllong string) (entity.ShortUrl, error) {
-	// Memanggil CreateUser dari repository untuk membuat pengguna baru
-	// createdUser, err := s.userRepo.CreateUser(ctx, user)
-	// if err != nil {
-	// 	return entity.User{}, fmt.Errorf("gagal membuat pengguna: %v", err)
-	// }
 
-	// redisKey := fmt.Sprintf("createdUser:%d", createdUser.ID)
-	// createdUserJSON, err := json.Marshal(createdUser)
-	// if err != nil {
-	// 	log.Println("gagal marshal json")
-	// }
-	// if err := s.rdb.Set(ctx, redisKey, createdUserJSON, 60*time.Second).Err(); err != nil {
-	// 	log.Println("error when set redis key", redisKey)
-	// }
-	createdUser := entity.ShortUrl{}
+	createdShortUrl, err := s.shortUrlRepo.CreateShortUrl(p_urllong)
+	if err != nil {
+		fmt.Errorf("gagal create short url: %v", err)
+		return entity.ShortUrl{}, err
+	}
 
-	return createdUser, nil
+	redisKey := fmt.Sprintf("shorturl:%s", createdShortUrl.UrlShort)
+	createdShortUrlJSON, err := json.Marshal(createdShortUrl)
+
+	if err != nil {
+		log.Println("gagal marshal json created short url")
+	}
+
+	if err := s.rdb.Set(context.Background(), redisKey, createdShortUrlJSON, 0).Err(); err != nil {
+		log.Println("error when set redis key", redisKey)
+	} else {
+		log.Println("success set redis key", redisKey)
+	}
+
+	return createdShortUrl, nil
 }
 
-// GetUserByID mendapatkan pengguna berdasarkan ID
 func (s shortUrlService) GetShortUrl(p_shortUrl string) (entity.ShortUrl, error) {
-	// Memanggil GetUserByID dari repository untuk mendapatkan pengguna berdasarkan ID
-	// id := ps_p_shortUrl
+	id := p_shortUrl
 
-	// redisKey := fmt.Sprintf("createdUser:%d", id)
-	// val, err := s.rdb.Get(redisKey).Result()
-	// if err == nil {
-	// 	log.Println("data tersedia di redis")
-	// 	err = json.Unmarshal([]byte(val), &user)
-	// 	if err != nil {
-	// 		log.Println("gagal marshall data di redis, coba ambil ke database")
-	// 	}
-	// }
+	shortUrl := entity.ShortUrl{}
+	redisKey := fmt.Sprintf("shorturl:%s", id)
+	val, err := s.rdb.Get(context.Background(), redisKey).Result()
+	if err == nil {
+		log.Println("data tersedia di redis")
+		err = json.Unmarshal([]byte(val), &shortUrl)
+		if err != nil {
+			log.Println("gagal marshall data di redis, coba ambil ke database")
+		}
+	}
 
-	// if err != nil {
-	// 	log.Println("data tidak tersedia di redis, ambil dari database")
-	// 	user, err = s.userRepo.GetUserByID(ctx, id)
-	// 	if err != nil {
-	// 		log.Println("gagal ambil data di database")
-	// 		return entity.User{}, fmt.Errorf("gagal mendapatkan pengguna berdasarkan ID: %v", err)
-	// 	}
-	// }
-	user := entity.ShortUrl{}
+	if err != nil {
+		log.Println("data tidak tersedia di redis, ambil dari database")
+		shortUrl, err = s.shortUrlRepo.GetShortUrl(id)
+		if err != nil {
+			log.Println("gagal ambil data di database")
+			return entity.ShortUrl{}, fmt.Errorf("gagal mendapatkan long url berdasarkan shorturl: %v", err)
+		}
+	}
 
-	return user, nil
+	return shortUrl, nil
 }

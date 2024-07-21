@@ -27,19 +27,14 @@ func main() {
 		DB:       config.RedisDatabase, // use default DB
 	})
 
-	// setup service
-
-	// uncomment to use postgres gorm
-	//userRepo := postgres_gorm.NewshortUrlRepository(gormDB)
-	// rst, _ := userRepo.CreateShorUrl("https://convertlive.com/id/u/mengkonversi/detik/ke/bulan#7776000")
-	// fmt.Println(rst)
-	// rst2, _ := userRepo.GetUShortUrl("FAo8Py")
-	// fmt.Println(rst2)
-
 	shortUrlRepo := postgres_gorm.NewshortUrlRepository(gormDB)
 	shortUrlService := service.NewShortUrlService(shortUrlRepo, rdb)
 
-	fmt.Println(shortUrlService)
+	//rst, _ := shortUrlService.CreateShortUrl("https://detik.com/id/u/mengkonversi/detik/ke/bulan#7776000")
+	fmt.Println(rst1)
+	rst2, _ := shortUrlService.GetShortUrl("dWgXDZ")
+	fmt.Println(rst2)
+
 	//userHandler := ginHandler.NewUserHandler(userService)
 	//userHandler := grpcHandler.NewUserHandler(userService)
 
