@@ -9,7 +9,7 @@ package proto.shorturl_service.v1;
 
 service ShortUrlService {
   rpc CreateShortUrl (CreateShortUrlRequest) returns (CreateShortResponse) {}
-  rpc GetShortUrl(GetShortRequest) returns (GetShortRespons) {}
+  rpc GetShortUrl(GetShortRequest) returns (GetShortResponse) {}
 
 }
 
@@ -27,7 +27,7 @@ message GetShortRequest {
   string url_short = 1;
 }
 
-message GetShortRespons {
+message GetShortResponse {
   string url_long = 1;
   string url_short = 2;
   google.protobuf.Timestamp created_at = 3;

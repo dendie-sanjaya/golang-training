@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShortUrlServiceClient interface {
 	CreateShortUrl(ctx context.Context, in *CreateShortUrlRequest, opts ...grpc.CallOption) (*CreateShortResponse, error)
-	GetShortUrl(ctx context.Context, in *GetShortRequest, opts ...grpc.CallOption) (*GetShortRespons, error)
+	GetShortUrl(ctx context.Context, in *GetShortRequest, opts ...grpc.CallOption) (*GetShortResponse, error)
 }
 
 type shortUrlServiceClient struct {
@@ -49,9 +49,9 @@ func (c *shortUrlServiceClient) CreateShortUrl(ctx context.Context, in *CreateSh
 	return out, nil
 }
 
-func (c *shortUrlServiceClient) GetShortUrl(ctx context.Context, in *GetShortRequest, opts ...grpc.CallOption) (*GetShortRespons, error) {
+func (c *shortUrlServiceClient) GetShortUrl(ctx context.Context, in *GetShortRequest, opts ...grpc.CallOption) (*GetShortResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetShortRespons)
+	out := new(GetShortResponse)
 	err := c.cc.Invoke(ctx, ShortUrlService_GetShortUrl_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (c *shortUrlServiceClient) GetShortUrl(ctx context.Context, in *GetShortReq
 // for forward compatibility
 type ShortUrlServiceServer interface {
 	CreateShortUrl(context.Context, *CreateShortUrlRequest) (*CreateShortResponse, error)
-	GetShortUrl(context.Context, *GetShortRequest) (*GetShortRespons, error)
+	GetShortUrl(context.Context, *GetShortRequest) (*GetShortResponse, error)
 	mustEmbedUnimplementedShortUrlServiceServer()
 }
 
@@ -75,7 +75,7 @@ type UnimplementedShortUrlServiceServer struct {
 func (UnimplementedShortUrlServiceServer) CreateShortUrl(context.Context, *CreateShortUrlRequest) (*CreateShortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateShortUrl not implemented")
 }
-func (UnimplementedShortUrlServiceServer) GetShortUrl(context.Context, *GetShortRequest) (*GetShortRespons, error) {
+func (UnimplementedShortUrlServiceServer) GetShortUrl(context.Context, *GetShortRequest) (*GetShortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShortUrl not implemented")
 }
 func (UnimplementedShortUrlServiceServer) mustEmbedUnimplementedShortUrlServiceServer() {}
