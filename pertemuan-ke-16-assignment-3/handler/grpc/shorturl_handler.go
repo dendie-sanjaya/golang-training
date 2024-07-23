@@ -34,6 +34,7 @@ func (u *ShortUrlHandler) CreateShortUrl(ctx context.Context, req *pb.CreateShor
 }
 
 func (u *ShortUrlHandler) GetShortUrl(ctx context.Context, req *pb.GetShortRequest) (*pb.GetShortResponse, error) {
+	log.Println("masuk ke handler : ", req.UrlShort)
 	shorturl, err := u.shorturlService.GetShortUrl(req.UrlShort)
 	if err != nil {
 		log.Println(err)
