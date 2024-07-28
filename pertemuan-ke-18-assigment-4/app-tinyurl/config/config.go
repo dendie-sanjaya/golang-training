@@ -11,9 +11,9 @@ const (
 	PostgresStringConnection = "postgresql://postgres:12345678@localhost:5433/golang_shorturl_test"
 	PostgresDB               = "golang_shorturl_test"
 	PostgresUser             = "postgres"
-	/PostgresPassword         = "12345678"
-	//PostgresPassword = "password"
-	PostgressPort    = "5432"
+	//PostgresPassword         = "12345678"
+	PostgresPassword = "password"
+	PostgressPort    = "5434"
 	PostgresSSLMode  = "disable"
 	PostgresHost     = "localhost"
 )
