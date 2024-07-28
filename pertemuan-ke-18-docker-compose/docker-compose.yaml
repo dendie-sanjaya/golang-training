@@ -1,0 +1,17 @@
+version: "1"
+services:
+  app:
+    image: golang-multi-stage:latest
+  redis:
+    image: redis:5.0.12
+    command: redis-server --requirepass redispass
+    ports:
+      - 6378:6379
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=praisindo
+    ports:
+      - 127.0.0.1:5434:5432
