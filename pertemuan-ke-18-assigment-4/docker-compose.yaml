@@ -6,9 +6,9 @@ services:
     command: redis-server --requirepass redispass
     ports:
       - 6378:6379
-    networks:
-      networktinyurl:
-        ipv4_address: 172.22.0.3  
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.3  
 
   postgres:
     image: postgres
@@ -16,39 +16,40 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-#      - POSTGRES_DB=praisindo
+      - POSTGRES_DB=postgres
     ports:
       - 5434:5432
-    networks:
-      networktinyurl:
-        ipv4_address: 172.22.0.4  
+    # command: -p 5434
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.4  
 
   app:
-    image: app-tinyurl:latest
     container_name: app-tinyurl
     build:
       context: .
       dockerfile: Dockerfile    
+    image: app-tinyurl:latest
     ports:
       - "8383:8080"
       - "50053:50052"
-    environment:
-      - POSTGRES_HOST=172.22.0.4
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - REDIS_HOST=172.22.0.3
-      - REDIS_PASSWORD=redispass      
+    # environment:
+      # - POSTGRES_HOST=postgres
+      # - POSTGRES_PORT=5434
+      # - POSTGRES_USER=postgres
+      # - POSTGRES_PASSWORD=password
+      # - REDIS_HOST=172.22.0.3
+      # - REDIS_PASSWORD=redispass      
     depends_on:
       - postgres
       - redis
-    networks:
-      networktinyurl:
-        ipv4_address: 172.22.0.5  
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.5  
 
-networks:
-  networktinyurl:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.22.0.0/16
+# networks:
+#   networktinyurl:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.22.0.0/16

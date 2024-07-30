@@ -26,8 +26,11 @@ import (
 )
 
 func main() {
+	time.Sleep(3 * time.Second)
 	// Setup gorm connection without selecting a database
 	dsn := "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " sslmode=" + config.PostgresSSLMode
+	//dsn := "postgresql://postgres:password@postgres:5434/postgres?sslmode=disable"
+	fmt.Println(dsn)
 	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
 	if err != nil {
 		log.Fatalln(err)

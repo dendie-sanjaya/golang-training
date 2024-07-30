@@ -4,7 +4,7 @@ package config
 const (
 	AuthBasicUsername        = "user"
 	AuthBasicPassword        = "pass"
-	RedisHost                = "redis:6378"
+	RedisHost                = "redis:6379"
 	RedisUsername            = ""
 	RedisPassword            = "redispass"
 	RedisDatabase            = 0
@@ -13,7 +13,7 @@ const (
 	PostgresUser             = "postgres"
 	//	PostgresPassword         = "12345678"
 	PostgresPassword = "password"
-	PostgressPort    = "5434"
+	PostgressPort    = "5432"
 	PostgresSSLMode  = "disable"
-	PostgresHost     = "172.22.0.4"
+	PostgresHost     = "postgres"
 )

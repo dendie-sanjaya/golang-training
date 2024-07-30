@@ -5,7 +5,10 @@ FROM golang:1.22.4-alpine AS build
 WORKDIR /app
 
 # Copy the go.mod and go.sum files
-COPY app-tinyurl/go.mod app-tinyurl/go.sum ./
+COPY app-tinyurl/go.sum ./
+
+# Copy the go.mod and go.sum files
+COPY app-tinyurl/go.mod  ./
 
 # Download all dependencies
 RUN go mod download
@@ -30,6 +33,9 @@ WORKDIR /app
 
 # Copy the binary from the build stage
 COPY --from=build /app/go-tinyurl .
+
+# menambahkan ca-certificates
+RUN apk add --no-cache ca-certificates
 
 # Set the entrypoint command
 CMD ["./go-tinyurl"]
