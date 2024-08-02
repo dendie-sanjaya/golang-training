@@ -1,0 +1,32 @@
+run:
+  tests: false
+
+linters:
+  # Disable all linters.
+  # Default: false
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable:
+    - gosimple
+
+issues:
+  # List of regexps of issue texts to exclude.
+  #
+  # But independently of this option we use default exclude patterns,
+  # it can be disabled by `exclude-use-default: false`.
+  # To list all excluded by default patterns execute `golangci-lint run --help`
+  #
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+   # Exclude all linters from running on test.go files.
+    - path: '*test*.go'
+      linters:
+        - '*'   

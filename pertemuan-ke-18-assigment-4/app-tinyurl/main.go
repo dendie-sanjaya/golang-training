@@ -127,7 +127,7 @@ func main() {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		}
 		log.Print(urlShort.UrlLong)
-		c.Redirect(http.StatusMovedPermanently, urlShort.UrlLong)
+		c.Redirect(302, urlShort.UrlLong)
 	})
 
 	gwServer.Run(":8080")

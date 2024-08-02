@@ -1,0 +1,25 @@
+version: v1
+plugins:
+  - name: go
+    out: .
+    opt: paths=source_relative
+  - name: go-grpc
+    out: .
+    opt: paths=source_relative
+  - name: grpc-gateway
+    out: .
+    opt:
+      - paths=source_relative
+      - generate_unbound_methods=true
+      - allow_repeated_fields_in_body=true
+      - allow_delete_body=true
+  - name: openapiv2
+    out: docs
+    opt:
+      - simple_operation_ids=true
+      - fqn_for_openapi_name=true
+      - disable_default_errors=true
+      - include_package_in_tags=true
+      - allow_repeated_fields_in_body=true
+      - allow_delete_body=true
+      - use_allof_for_refs=true

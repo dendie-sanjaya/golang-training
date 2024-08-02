@@ -1,0 +1,100 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/shorturl_service/v1/shorturl.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "proto.shorturl_service.v1.ShortUrlService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/createshorturl": {
+      "get": {
+        "operationId": "CreateShortUrl",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.shorturl_service.v1.CreateShortResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "urlLong",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "proto.shorturl_service.v1.ShortUrlService"
+        ]
+      }
+    },
+    "/v1/getshorturl/{urlShort}": {
+      "get": {
+        "operationId": "GetShortUrl",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.shorturl_service.v1.GetShortResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "urlShort",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "proto.shorturl_service.v1.ShortUrlService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "proto.shorturl_service.v1.CreateShortResponse": {
+      "type": "object",
+      "properties": {
+        "urlLong": {
+          "type": "string"
+        },
+        "urlShort": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "proto.shorturl_service.v1.GetShortResponse": {
+      "type": "object",
+      "properties": {
+        "urlLong": {
+          "type": "string"
+        },
+        "urlShort": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
