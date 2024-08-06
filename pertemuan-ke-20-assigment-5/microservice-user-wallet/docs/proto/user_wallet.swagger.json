@@ -165,6 +165,13 @@
             "format": "int32"
           },
           {
+            "name": "walletId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
             "name": "amount",
             "in": "query",
             "required": false,
@@ -351,6 +358,10 @@
           "format": "int32"
         },
         "userIdTo": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletId": {
           "type": "integer",
           "format": "int32"
         },

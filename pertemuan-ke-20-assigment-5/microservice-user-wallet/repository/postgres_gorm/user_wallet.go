@@ -121,12 +121,12 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 
 func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupRequest) (*pb.TopupResponse, error) {
 	// Input history top-up
-	walletId := 1
+	walletId := int32(req.WalletId)
 
 	history := entity.UserSaldoHistory{
 		UserIdFrom:      int(req.Id),
 		UserIdTo:        int(req.Id),
-		WalletId:        walletId,
+		WalletId:        int(walletId),
 		TypeTransaction: "credit",
 		TypeCredit:      "topup",
 		Total:           float32(req.Amount),
@@ -135,18 +135,18 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 	_, err := history, handler.db.Table("user_saldo_histories").Create(&history).Error
 	if err != nil {
 		log.Fatal("Failed to top-up:", err)
-		//return history, err
-
+		return nil, nil
 	}
 
+	//log.Println(history.WalletId)
 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo := entity.UserSaldo{}
-	if err := handler.db.Table("user_saldos").Where("user_id = ?", req.Id).First(&saldo).Error; err != nil {
+	if err := handler.db.Table("user_saldos").Where("user_id = ? and wallet_id = ? ", req.Id, walletId).First(&saldo).Error; err != nil {
 		// Jika tidak ditemukan, buat entri baru dengan saldo awal
 		if err == gorm.ErrRecordNotFound {
 			saldo = entity.UserSaldo{
 				UserId:   int(req.Id),
-				WalletId: walletId,
+				WalletId: int(walletId),
 				Saldo:    0.0,
 			}
 			if err := handler.db.Table("user_saldos").Create(&saldo).Error; err != nil {
@@ -171,6 +171,7 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 		Id:              int32(history.Id),
 		UserIdFrom:      int32(history.UserIdFrom),
 		UserIdTo:        int32(history.UserIdTo),
+		WalletId:        int32(history.WalletId),
 		TypeTransaction: history.TypeTransaction,
 		TypeCredit:      history.TypeCredit,
 		Total:           float32(history.Total),
