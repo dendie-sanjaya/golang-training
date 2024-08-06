@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option go_package = "praisindo/proto/shorturl/v1;shorturl";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+package proto.shorturl_service.v1;
+
+service ShortUrlService {
+  rpc CreateShortUrl (CreateShortUrlRequest) returns (CreateShortResponse) {
+    option (google.api.http) = {
+       get: "/v1/createshorturl"
+     };   
+  }
+  rpc GetShortUrl(GetShortRequest) returns (GetShortResponse) {
+     option (google.api.http) = {
+       get: "/v1/getshorturl/{url_short}"
+     };
+  }
+
+}
+
+message CreateShortUrlRequest {
+  string url_long = 1;
+}
+
+message CreateShortResponse {
+  string url_long = 1;
+  string url_short = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message GetShortRequest {
+  string url_short = 1;
+}
+
+message GetShortResponse {
+  string url_long = 1;
+  string url_short = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
