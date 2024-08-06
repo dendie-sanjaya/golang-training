@@ -31,6 +31,24 @@ service UserWalletService {
       body: "*"
     };
   }
+  rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/createWallet"
+    };
+  }  
+
+  rpc UpdateWallet (UpdateWalletRequest) returns (UpdateWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/updateWallet"
+    };
+  }  
+
+  rpc DeleteWallet (DeleteWalletRequest) returns (DeleteWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/deleteWallet"
+    };
+  }  
+
 }
 
 message HistoryTransaction {
@@ -81,4 +99,42 @@ message GetTransactionHistoryRequest {
 
 message GetTransactionHistoryResponse {
   repeated HistoryTransaction history = 1;
+}
+
+message CreateWalletRequest {
+  int32 user_id = 1;
+  string type = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4; 
+}
+
+message CreateWalletResponse {
+  int32  user_id = 1;
+  int32  wallet_id = 2;
+  string type = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5; 
+}
+
+message UpdateWalletRequest {
+  int32 wallet_id = 1;
+  string type = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 7; 
+}
+
+message UpdateWalletResponse {
+  int32  user_id = 1;
+  int32  wallet_id = 2;
+  string type = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5; 
+}
+
+message DeleteWalletRequest {
+  int32  wallet_id = 1;
+}
+
+message DeleteWalletResponse {
+  int32  wallet_id = 1;
 }

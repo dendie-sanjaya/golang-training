@@ -2,10 +2,12 @@ package postgres_gorm
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"praisindo/entity"
 	pb "praisindo/proto"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -220,28 +222,51 @@ func (handler *UserWalletHandler) GetTransactionHistory(ctx context.Context, req
 	}, nil
 }
 
-func (handler *UserWalletHandler) CreateWallet(ctx context.Context) {
-	userId := 1
-	typeWallet := "in"
-	name := "gaji"
+func (handler *UserWalletHandler) CreateWallet(ctx context.Context, req *pb.CreateWalletRequest) (*pb.CreateWalletResponse, error) {
+	log.Println("Create Wallet")
+	userId := int32(req.UserId)
+	typeWallet := req.Type
+	name := req.Name
 
 	// Input Credit
 	dataWallet := entity.UserWalet{
-		Id:   userId,
-		Type: typeWallet,
-		Name: name,
+		UserId: int(userId),
+		Type:   typeWallet,
+		Name:   name,
 	}
 
+	// Create the wallet entry
 	err := handler.db.Table("user_walets").Create(&dataWallet).Error
 	if err != nil {
-		log.Fatal("Failed to create wallet :", err)
-
+		log.Fatal("Failed to Create wallet:", err)
+		return nil, fmt.Errorf("failed to create wallet: %v", err)
 	}
+
+	// Retrieve the last inserted wallet entry
+	var createdWallet entity.UserWalet
+	err = handler.db.Table("user_walets").Where("id = ?", dataWallet.Id).First(&createdWallet).Error
+	if err != nil {
+		log.Fatal("Failed to retrieve created wallet:", err)
+		return nil, fmt.Errorf("failed to retrieve created wallet: %v", err)
+	}
+
+	log.Println("Wallet Created successfully")
+
+	return &pb.CreateWalletResponse{
+		UserId:    int32(createdWallet.UserId),
+		WalletId:  int32(createdWallet.Id),
+		Type:      createdWallet.Type,
+		Name:      createdWallet.Name,
+		CreatedAt: timestamppb.New(createdWallet.CreatedAt),
+	}, nil
 }
-func (handler *UserWalletHandler) UpdateWallet(ctx context.Context) {
-	userId := 1
-	typeWallet := "in"
-	name := "gaji edit"
+
+func (handler *UserWalletHandler) UpdateWallet(ctx context.Context, req *pb.UpdateWalletRequest) (*pb.UpdateWalletResponse, error) {
+	walletId := int32(req.WalletId)
+	typeWallet := req.Type
+	name := req.Name
+
+	log.Println("Update Wallet: ", int32(req.WalletId))
 
 	// Update Credit
 	dataWallet := entity.UserWalet{
@@ -249,23 +274,44 @@ func (handler *UserWalletHandler) UpdateWallet(ctx context.Context) {
 		Name: name,
 	}
 
-	err := handler.db.Table("user_walets").Where("id = ?", userId).Updates(&dataWallet).Error
+	// Define a struct to hold the updated data
+	var updatedWallet entity.UserWalet
+
+	err := handler.db.Table("user_walets").Where("id = ?", walletId).Updates(&dataWallet).First(&updatedWallet).Error
 	if err != nil {
-		log.Fatal("Failed to update wallet:", err)
-	} else {
-		log.Println("Wallet updated successfully")
+		if err == gorm.ErrRecordNotFound {
+			log.Println("Failed to update wallet: record not found")
+			return nil, fmt.Errorf("wallet with ID %d not found", walletId)
+		}
+		log.Println("Failed to update wallet:", err)
+		return nil, fmt.Errorf("failed to update wallet: %v", err)
 	}
+
+	log.Println("Wallet updated successfully :", walletId)
+
+	return &pb.UpdateWalletResponse{
+		UserId:    int32(updatedWallet.UserId),
+		WalletId:  int32(updatedWallet.Id),
+		Type:      updatedWallet.Type,
+		Name:      updatedWallet.Name,
+		CreatedAt: timestamppb.New(updatedWallet.CreatedAt),
+	}, nil
 }
 
-func (handler *UserWalletHandler) DeleteWallet(ctx context.Context) {
-	userId := 1
+func (handler *UserWalletHandler) DeleteWallet(ctx context.Context, req *pb.DeleteWalletRequest) (*pb.DeleteWalletResponse, error) {
+	walletId := int32(req.WalletId)
 
-	err := handler.db.Table("user_walets").Where("id = ?", userId).Delete(nil).Error
+	err := handler.db.Table("user_walets").Where("id = ?", walletId).Delete(nil).Error
 	if err != nil {
 		log.Fatal("Failed to delete wallet:", err)
+		return nil, fmt.Errorf("wallet with ID %d not found", walletId)
 	} else {
-		log.Println("Wallet deleted successfully")
+		log.Println("Wallet deleted successfully", req.WalletId)
 	}
+
+	return &pb.DeleteWalletResponse{
+		WalletId: walletId,
+	}, nil
 }
 
 func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context) {

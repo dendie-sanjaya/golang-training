@@ -16,6 +16,75 @@
     "application/json"
   ],
   "paths": {
+    "/v1/createWallet": {
+      "get": {
+        "operationId": "CreateWallet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.CreateWalletResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
+    },
+    "/v1/deleteWallet": {
+      "get": {
+        "operationId": "DeleteWallet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.DeleteWalletResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
+    },
     "/v1/getTransactionHistory": {
       "put": {
         "operationId": "GetTransactionHistory",
@@ -153,9 +222,85 @@
           "proto.user_wallet_service.v1.UserWalletService"
         ]
       }
+    },
+    "/v1/updateWallet": {
+      "get": {
+        "operationId": "UpdateWallet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.UpdateWalletResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
     }
   },
   "definitions": {
+    "proto.user_wallet_service.v1.CreateWalletResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.DeleteWalletResponse": {
+      "type": "object",
+      "properties": {
+        "walletId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "proto.user_wallet_service.v1.GetTransactionHistoryRequest": {
       "type": "object",
       "properties": {
@@ -241,6 +386,29 @@
         },
         "history2": {
           "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.UpdateWalletResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },

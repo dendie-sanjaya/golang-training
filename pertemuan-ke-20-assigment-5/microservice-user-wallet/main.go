@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -89,12 +88,12 @@ func main() {
 	userWalletHandler := postgres_gorm.NewUserWalletHandler(gormDB)
 
 	// Create a new context
-	ctx := context.Background()
+	//ctx := context.Background()
 	//userWalletHandler.CreateWallet(ctx)
 	//userWalletHandler.UpdateWallet(ctx)
 	//userWalletHandler.DeleteWallet(ctx)
 	//userWalletHandler.GetUserBalanceByWallet(ctx)
-	userWalletHandler.Spend(ctx)
+	//userWalletHandler.Spend(ctx)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserWalletServiceServer(grpcServer, userWalletHandler)
