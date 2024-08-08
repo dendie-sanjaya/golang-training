@@ -315,31 +315,32 @@ func (handler *UserWalletHandler) DeleteWallet(ctx context.Context, req *pb.Dele
 	}, nil
 }
 
-func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context) {
-	walletId := 1
-	userId := 1
+func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context, req *pb.GetUserBalanceByWalletRequest) (*pb.GetUserBalanceByWalletResponse, error) {
+	walletId := req.WalletId
+	userId := req.UserId
 	// 	// 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo := entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ? and  wallet_id = ?", userId, walletId).First(&saldo).Error; err != nil {
-		log.Fatal("Failed to retrieve user saldo:", err)
+		return nil, fmt.Errorf("Failed to retrieve user saldo:", err)
 	}
 
-	// return &pb.GetUserBalanceResponse{
-	// 	UserId: req.Id,
-	// 	Saldo:  float32(saldo.Saldo),
-	// }, nil
+	return &pb.GetUserBalanceByWalletResponse{
+		UserId:   int32(saldo.UserId),
+		WalletId: int32(saldo.WalletId),
+		Saldo:    float32(saldo.Saldo),
+	}, nil
 }
 
-func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Context) {
-	walletId := 1
-	userId := 1
+func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Context, req *pb.GetTransactionHistoryByWalletRequest) (*pb.GetTransactionHistoryByWalletResponse, error) {
+	walletId := req.WalletId
+	userId := req.UserId
 
 	var transactions []entity.UserSaldoHistory
 
-	result := handler.db.Table("user_saldo_histories").Where("user_id_from = ? OR user_id_to = ? AND wallet_id = ? ", userId, userId, walletId).Order("created_at DESC").Find(&transactions)
+	result := handler.db.Table("user_saldo_histories").Where("(user_id_from = ? OR user_id_to = ?) AND wallet_id = ? ", userId, userId, walletId).Order("created_at DESC").Find(&transactions)
 	if result.Error != nil {
-		log.Fatal("Failed to retrieve user saldo:", result.Error)
-		//return nil, result.Error
+		log.Fatal("Failed to retrieve user wallet saldo:", result.Error)
+		return nil, fmt.Errorf("Failed to retrieve user wallet saldo:", result.Error)
 	}
 
 	// Konversi transactions ke format yang diinginkan oleh gRPC response
@@ -347,6 +348,7 @@ func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Cont
 	for _, transaction := range transactions {
 		transactionResponse := &pb.HistoryTransaction{
 			Id:              int32(transaction.Id),
+			WalletId:        int32(transaction.WalletId),
 			UserIdFrom:      int32(transaction.UserIdFrom),
 			UserIdTo:        int32(transaction.UserIdTo),
 			TypeTransaction: transaction.TypeTransaction,
@@ -356,25 +358,18 @@ func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Cont
 		transactionResponses = append(transactionResponses, transactionResponse)
 	}
 
-	/*
-		return &pb.GetTransactionHistoryResponse{
-			History: transactionResponses,
-		}, nil
-	*/
+	return &pb.GetTransactionHistoryByWalletResponse{
+		History: transactionResponses,
+	}, nil
 }
 
-func (handler *UserWalletHandler) Spend(ctx context.Context) {
+func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpendRequest) (*pb.GetSpendResponse, error) {
 
-	// userIDFrom := int(req.From)
-	// userIDTo := int(req.To)
-	// amount := float32(req.Amount)
-
-	userIDFrom := 1
-	userIDTo := 1
-	amount := float32(1000.00)
-	walletIdFrom := 1
-	walletIdTo := 2
-
+	userIDFrom := int(req.UserIdFrom)
+	userIDTo := int(req.UserIdTo)
+	amount := float32(req.Amount)
+	walletIdFrom := int(req.WalletIdFrom)
+	walletIdTo := int(req.WalletIdTo)
 	// Input Credit
 	historyCredit := entity.UserSaldoHistory{
 		UserIdFrom:      userIDFrom,
@@ -450,29 +445,31 @@ func (handler *UserWalletHandler) Spend(ctx context.Context) {
 		//return historyDebit, historyDebit, nil
 	}
 
-	// historyCreditResponse := &pb.HistoryTransaction{
-	// 	Id:              int32(historyCredit.Id),
-	// 	UserIdFrom:      int32(historyCredit.UserIdFrom),
-	// 	UserIdTo:        int32(historyCredit.UserIdTo),
-	// 	TypeTransaction: historyCredit.TypeTransaction,
-	// 	TypeCredit:      historyCredit.TypeCredit,
-	// 	Total:           float32(historyCredit.Total),
-	// }
+	historyCreditResponse := &pb.HistoryTransaction{
+		Id:              int32(historyCredit.Id),
+		UserIdFrom:      int32(historyCredit.UserIdFrom),
+		UserIdTo:        int32(historyCredit.UserIdTo),
+		WalletId:        int32(historyCredit.WalletId),
+		TypeTransaction: historyCredit.TypeTransaction,
+		TypeCredit:      historyCredit.TypeCredit,
+		Total:           float32(historyCredit.Total),
+	}
 
-	// historyDebitResponse := &pb.HistoryTransaction{
-	// 	Id:              int32(historyCredit.Id),
-	// 	UserIdFrom:      int32(historyCredit.UserIdFrom),
-	// 	UserIdTo:        int32(historyCredit.UserIdTo),
-	// 	TypeTransaction: historyDebit.TypeTransaction,
-	// 	TypeCredit:      historyDebit.TypeCredit,
-	// 	Total:           float32(historyCredit.Total),
-	// }
+	historyDebitResponse := &pb.HistoryTransaction{
+		Id:              int32(historyCredit.Id),
+		UserIdFrom:      int32(historyCredit.UserIdFrom),
+		UserIdTo:        int32(historyCredit.UserIdTo),
+		WalletId:        int32(historyDebit.WalletId),
+		TypeTransaction: historyDebit.TypeTransaction,
+		TypeCredit:      historyDebit.TypeCredit,
+		Total:           float32(historyCredit.Total),
+	}
 
-	// return &pb.TransferResponse{
-	// 		History1: historyCreditResponse,
-	// 		History2: historyDebitResponse,
-	// 	},
-	// 	nil
+	return &pb.GetSpendResponse{
+			History1: historyCreditResponse,
+			History2: historyDebitResponse,
+		},
+		nil
 }
 
 func NewUserWalletHandler(db *gorm.DB) *UserWalletHandler {

@@ -111,6 +111,32 @@
         ]
       }
     },
+    "/v1/getTransactionHistoryByWallet": {
+      "put": {
+        "operationId": "GetTransactionHistoryByWallet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.GetTransactionHistoryByWalletResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.GetTransactionHistoryByWalletRequest"
+            }
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
+    },
     "/v1/getUserBalance/{id}": {
       "post": {
         "operationId": "GetUserBalance",
@@ -137,6 +163,72 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/proto.user_wallet_service.v1.UserWalletService.GetUserBalanceBody"
+            }
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
+    },
+    "/v1/getUserBalanceByWallet/{userId}/{walletId}": {
+      "post": {
+        "operationId": "GetUserBalanceByWallet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.GetUserBalanceByWalletResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "walletId",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "format": "float"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.UserWalletService.GetUserBalanceByWalletBody"
+            }
+          }
+        ],
+        "tags": [
+          "proto.user_wallet_service.v1.UserWalletService"
+        ]
+      }
+    },
+    "/v1/spend": {
+      "put": {
+        "operationId": "GetSpend",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.GetSpendResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/proto.user_wallet_service.v1.GetSpendRequest"
             }
           }
         ],
@@ -308,6 +400,67 @@
         }
       }
     },
+    "proto.user_wallet_service.v1.GetSpendRequest": {
+      "type": "object",
+      "properties": {
+        "userIdFrom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "userIdTo": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletIdFrom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletIdTo": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "amount": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.GetSpendResponse": {
+      "type": "object",
+      "properties": {
+        "history1": {
+          "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+        },
+        "history2": {
+          "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.GetTransactionHistoryByWalletRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.GetTransactionHistoryByWalletResponse": {
+      "type": "object",
+      "properties": {
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
+          }
+        }
+      }
+    },
     "proto.user_wallet_service.v1.GetTransactionHistoryRequest": {
       "type": "object",
       "properties": {
@@ -326,6 +479,23 @@
             "type": "object",
             "$ref": "#/definitions/proto.user_wallet_service.v1.HistoryTransaction"
           }
+        }
+      }
+    },
+    "proto.user_wallet_service.v1.GetUserBalanceByWalletResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "walletId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saldo": {
+          "type": "number",
+          "format": "float"
         }
       }
     },
@@ -424,6 +594,9 @@
       }
     },
     "proto.user_wallet_service.v1.UserWalletService.GetUserBalanceBody": {
+      "type": "object"
+    },
+    "proto.user_wallet_service.v1.UserWalletService.GetUserBalanceByWalletBody": {
       "type": "object"
     }
   }

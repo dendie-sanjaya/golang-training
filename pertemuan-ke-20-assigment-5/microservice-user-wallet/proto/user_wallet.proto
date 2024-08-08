@@ -49,6 +49,26 @@ service UserWalletService {
     };
   }  
 
+  rpc GetUserBalanceByWallet (GetUserBalanceByWalletRequest) returns (GetUserBalanceByWalletResponse) {
+    option (google.api.http) = {
+      post: "/v1/getUserBalanceByWallet/{user_id}/{wallet_id}",
+      body: "*"
+    };
+  }  
+
+  rpc GetTransactionHistoryByWallet (GetTransactionHistoryByWalletRequest) returns (GetTransactionHistoryByWalletResponse) {
+    option (google.api.http) = {
+      put: "/v1/getTransactionHistoryByWallet",
+      body: "*"
+    };
+  } 
+
+  rpc GetSpend (GetSpendRequest) returns (GetSpendResponse) {
+    option (google.api.http) = {
+      put: "/v1/spend",
+      body: "*"
+    };
+  }  
 }
 
 message HistoryTransaction {
@@ -139,4 +159,39 @@ message DeleteWalletRequest {
 
 message DeleteWalletResponse {
   int32  wallet_id = 1;
+}
+
+
+message GetUserBalanceByWalletRequest {
+  int32 user_id = 1;
+  float wallet_id = 2;
+}
+
+message GetUserBalanceByWalletResponse {
+  int32 user_id = 1;
+  int32 wallet_id = 2;  
+  float saldo = 3;
+}
+
+message GetTransactionHistoryByWalletRequest {
+  int32 user_id = 1;
+  int32 wallet_id = 2;
+}
+
+message GetTransactionHistoryByWalletResponse {
+  repeated HistoryTransaction history = 1;
+}
+
+message GetSpendRequest {
+  int32 user_id_from = 1;
+  int32 user_id_to = 2;
+  int32 wallet_id_from = 3;
+  int32 wallet_id_to = 4;
+  float amount = 5;
+}
+
+message GetSpendResponse {
+  HistoryTransaction history1 = 1;
+  HistoryTransaction history2 = 2;
+  
 }
