@@ -65,7 +65,7 @@ func main() {
 
 	// setup gorm connection
 	//dsn := "postgresql://postgres:12345678@localhost:5432/Golang"
-	dsn = config.PostgresStringConnection
+	//dsn = config.PostgresStringConnection
 	gormDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
 	if err != nil {
 		log.Fatalln(err)

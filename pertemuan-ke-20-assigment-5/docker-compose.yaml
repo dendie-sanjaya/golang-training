@@ -26,7 +26,7 @@ services:
     #   networktinyurl:
     #     ipv4_address: 172.22.0.4  
 
-  app:
+  app_microservice_user_wallet:
     container_name: microservice-user-wallet
     build:
       context: .
@@ -45,26 +45,25 @@ services:
     #   networktinyurl:
     #     ipv4_address: 172.22.0.5  
 
-app:
+  app_microservice_user:
     container_name: microservice-user
     build:
       context: .
       dockerfile: Dockerfile.microservice-user  
     image: microservice-user:latest
     ports:
-      - "50052:50052"
+      - "50051:50051"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=password 
+   
     depends_on:
       - postgres
     # networks:
     #   networktinyurl:
     #     ipv4_address: 172.22.0.5  
-
-
 
 # networks:
 #   networktinyurl:
