@@ -33,7 +33,7 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 
 	err := handler.db.Table("user_saldo_histories").Create(&historyCredit).Error
 	if err != nil {
-		log.Fatal("Failed to history credit:", err)
+		return nil, fmt.Errorf("Failed to history credit:", err)
 		//return historyCredit, historyCredit, err
 
 	}
@@ -48,11 +48,11 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 				Saldo:  0.0,
 			}
 			if err := handler.db.Table("user_saldos").Create(&saldo).Error; err != nil {
-				log.Fatal("Failed to create user saldo credit:", err)
+				log.Println("Failed to create user saldo credit:", err)
 				//return historyCredit, historyCredit, err
 			}
 		} else {
-			log.Fatal("Failed to retrieve user saldo credit:", err)
+			log.Println("Failed to retrieve user saldo credit:", err)
 			//return historyCredit, historyCredit, err
 		}
 	}
@@ -60,7 +60,7 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 	// Perbarui saldo dengan menambahkan jumlah credit
 	saldo.Saldo += amount
 	if err := handler.db.Table("user_saldos").Where("user_id = ?", userIDTo).Update("saldo", saldo.Saldo).Error; err != nil {
-		log.Fatal("Failed to update user saldo credit:", err)
+		log.Println("Failed to update user saldo credit:", err)
 		//return historyCredit, historyCredit, nil
 	}
 
@@ -75,7 +75,7 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 
 	err = handler.db.Table("user_saldo_histories").Create(&historyDebit).Error
 	if err != nil {
-		log.Fatal("Failed to top-up debit:", err)
+		log.Println("Failed to top-up debit:", err)
 		//return historyDebit, historyDebit, err
 
 	}
@@ -83,15 +83,16 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo = entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ?", userIDFrom).First(&saldo).Error; err != nil {
-		log.Fatal("Failed to retrieve user saldo debit:", err)
+		//log.Fatal("Failed to retrieve user saldo debit:", err)
+		return nil, fmt.Errorf("ailed to retrieve user saldo debit:", err)
 		//return historyDebit, historyDebit, err
 	}
 
 	// Perbarui saldo dengan mengurangi jumlah debit
 	saldo.Saldo -= amount
 	if err := handler.db.Table("user_saldos").Where("user_id = ?", userIDFrom).Update("saldo", saldo.Saldo).Error; err != nil {
-		log.Fatal("Failed to update user saldo debit:", err)
-		//return historyDebit, historyDebit, nil
+		//log.Fatal("Failed to update user saldo debit:", err)
+		return nil, fmt.Errorf("Failed to retrieve user saldo debit:", err)
 	}
 
 	historyCreditResponse := &pb.HistoryTransaction{
@@ -134,8 +135,8 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 
 	_, err := history, handler.db.Table("user_saldo_histories").Create(&history).Error
 	if err != nil {
-		log.Fatal("Failed to top-up:", err)
-		return nil, nil
+		//log.Fatal("Failed to top-up:", err)
+		return nil, fmt.Errorf("Failed to top-up:", err)
 	}
 
 	//log.Println(history.WalletId)
@@ -150,11 +151,11 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 				Saldo:    0.0,
 			}
 			if err := handler.db.Table("user_saldos").Create(&saldo).Error; err != nil {
-				log.Fatal("Failed to create user saldo:", err)
+				//log.Fatal("Failed to create user saldo:", err)
 				//return history, err
 			}
 		} else {
-			log.Fatal("Failed to retrieve user saldo:", err)
+			//log.Fatal("Failed to retrieve user saldo:", err)
 			//return history, err
 		}
 	}
@@ -162,7 +163,7 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 	// Perbarui saldo dengan menambahkan jumlah top-up
 	saldo.Saldo += float32(req.Amount)
 	if err := handler.db.Table("user_saldos").Where("user_id = ? AND wallet_id = ?", req.Id, walletId).Update("saldo", saldo.Saldo).Error; err != nil {
-		log.Fatal("Failed to update user saldo:", err)
+		//log.Fatal("Failed to update user saldo:", err)
 		//return history, nil
 	}
 
@@ -187,7 +188,7 @@ func (handler *UserWalletHandler) GetUserBalance(ctx context.Context, req *pb.Ge
 	// 	// 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo := entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ?", req.Id).First(&saldo).Error; err != nil {
-		log.Fatal("Failed to retrieve user saldo:", err)
+		//log.Fatal("Failed to retrieve user saldo:", err)
 	}
 
 	return &pb.GetUserBalanceResponse{
@@ -382,9 +383,7 @@ func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpend
 
 	err := handler.db.Table("user_saldo_histories").Create(&historyCredit).Error
 	if err != nil {
-		log.Fatal("Failed to history credit:", err)
-		//return historyCredit, historyCredit, err
-
+		return nil, fmt.Errorf("1. Failed to history credit:", err)
 	}
 
 	// update saldo saat ini dari tabel user_saldo
@@ -398,20 +397,17 @@ func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpend
 				Saldo:    0.0,
 			}
 			if err := handler.db.Table("user_saldos").Create(&saldo).Error; err != nil {
-				log.Fatal("Failed to create user saldo credit:", err)
-				//return historyCredit, historyCredit, err
+				return nil, fmt.Errorf("2. Failed to create user saldo credit:", err)
 			}
 		} else {
-			log.Fatal("Failed to retrieve user saldo credit:", err)
-			//return historyCredit, historyCredit, err
+			return nil, fmt.Errorf("3. Failed to retrieve user saldo credit:", err)
 		}
 	}
 
 	// Perbarui saldo dengan menambahkan jumlah credit
 	saldo.Saldo += amount
 	if err := handler.db.Table("user_saldos").Where("user_id = ? and wallet_id = ? ", userIDTo, walletIdTo).Update("saldo", saldo.Saldo).Error; err != nil {
-		log.Fatal("Failed to update user saldo credit:", err)
-		//return historyCredit, historyCredit, nil
+		return nil, fmt.Errorf("4. Failed to update user saldo credit:", err)
 	}
 
 	// Input Debit
@@ -426,23 +422,21 @@ func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpend
 
 	err = handler.db.Table("user_saldo_histories").Create(&historyDebit).Error
 	if err != nil {
-		log.Fatal("Failed to top-up debit:", err)
-		//return historyDebit, historyDebit, err
+		return nil, fmt.Errorf("5. Failed to retrieve user saldo debit:", err)
 
 	}
 
 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo = entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ? and wallet_id = ?", userIDFrom, walletIdFrom).First(&saldo).Error; err != nil {
-		log.Fatal("Failed to retrieve user saldo debit:", err)
-		//return historyDebit, historyDebit, err
+		return nil, fmt.Errorf("6. Failed to retrieve user saldo debit:", err)
 	}
 
 	// Perbarui saldo dengan mengurangi jumlah debit
 	saldo.Saldo -= amount
 	if err := handler.db.Table("user_saldos").Where("user_id = ? and wallet_id = ?", userIDFrom, walletIdFrom).Update("saldo", saldo.Saldo).Error; err != nil {
 		log.Fatal("Failed to update user saldo debit:", err)
-		//return historyDebit, historyDebit, nil
+		return nil, fmt.Errorf("7. Failed to retrieve user saldo debit:", err)
 	}
 
 	historyCreditResponse := &pb.HistoryTransaction{
