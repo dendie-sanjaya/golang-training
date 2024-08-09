@@ -200,7 +200,14 @@ func (handler *UserWalletHandler) GetUserBalance(ctx context.Context, req *pb.Ge
 func (handler *UserWalletHandler) GetTransactionHistory(ctx context.Context, req *pb.GetTransactionHistoryRequest) (*pb.GetTransactionHistoryResponse, error) {
 	var transactions []entity.UserSaldoHistory
 
-	result := handler.db.Table("user_saldo_histories").Where("user_id_from = ? OR user_id_to = ?", req.UserId, req.UserId).Order("created_at DESC").Find(&transactions)
+	date_from := req.DateFrom
+	date_to := req.DateTo
+	limit := int(req.Limit)
+
+	result := handler.db.Table("user_saldo_histories").Where("(user_id_from = ? OR user_id_to = ?) AND (DATE(created_at) >= ? AND DATE(created_at) <= ? )", req.UserId, req.UserId, date_from, date_to).
+		Order("created_at DESC").
+		Limit(limit).
+		Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -319,6 +326,7 @@ func (handler *UserWalletHandler) DeleteWallet(ctx context.Context, req *pb.Dele
 func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context, req *pb.GetUserBalanceByWalletRequest) (*pb.GetUserBalanceByWalletResponse, error) {
 	walletId := req.WalletId
 	userId := req.UserId
+
 	// 	// 	// Ambil saldo saat ini dari tabel user_saldo
 	saldo := entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ? and  wallet_id = ?", userId, walletId).First(&saldo).Error; err != nil {
@@ -335,12 +343,18 @@ func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context, re
 func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Context, req *pb.GetTransactionHistoryByWalletRequest) (*pb.GetTransactionHistoryByWalletResponse, error) {
 	walletId := req.WalletId
 	userId := req.UserId
+	date_from := req.DateFrom
+	date_to := req.DateTo
+	limit := int(req.Limit)
 
 	var transactions []entity.UserSaldoHistory
 
-	result := handler.db.Table("user_saldo_histories").Where("(user_id_from = ? OR user_id_to = ?) AND wallet_id = ? ", userId, userId, walletId).Order("created_at DESC").Find(&transactions)
+	result := handler.db.Table("user_saldo_histories").Where("(user_id_from = ? OR user_id_to = ?) AND (DATE(created_at) >= ? AND DATE(created_at) <= ? )", userId, walletId, date_from, date_to).
+		Order("created_at DESC").
+		Limit(limit).
+		Find(&transactions)
 	if result.Error != nil {
-		log.Fatal("Failed to retrieve user wallet saldo:", result.Error)
+		log.Println("Failed to retrieve user wallet saldo:", result.Error)
 		return nil, fmt.Errorf("Failed to retrieve user wallet saldo:", result.Error)
 	}
 
@@ -355,7 +369,9 @@ func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Cont
 			TypeTransaction: transaction.TypeTransaction,
 			TypeCredit:      transaction.TypeCredit,
 			Total:           float32(transaction.Total),
+			CreatedAt:       timestamppb.New(transaction.CreatedAt),
 		}
+
 		transactionResponses = append(transactionResponses, transactionResponse)
 	}
 
@@ -365,7 +381,6 @@ func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Cont
 }
 
 func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpendRequest) (*pb.GetSpendResponse, error) {
-
 	userIDFrom := int(req.UserIdFrom)
 	userIDTo := int(req.UserIdTo)
 	amount := float32(req.Amount)

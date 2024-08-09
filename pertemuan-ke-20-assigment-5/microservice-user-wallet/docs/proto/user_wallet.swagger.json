@@ -446,6 +446,16 @@
         "walletId": {
           "type": "integer",
           "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "dateFrom": {
+          "type": "string"
+        },
+        "dateTo": {
+          "type": "string"
         }
       }
     },
@@ -467,6 +477,16 @@
         "userId": {
           "type": "integer",
           "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "dateFrom": {
+          "type": "string"
+        },
+        "dateTo": {
+          "type": "string"
         }
       }
     },
