@@ -87,7 +87,7 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 	saldo = entity.UserSaldo{}
 	if err := handler.db.Table("user_saldos").Where("user_id = ?", userIDFrom).First(&saldo).Error; err != nil {
 		//log.Fatal("Failed to retrieve user saldo debit:", err)
-		return nil, fmt.Errorf("ailed to retrieve user saldo debit:", err)
+		return nil, fmt.Errorf("Failed to retrieve user saldo debit:", err)
 		//return historyDebit, historyDebit, err
 	}
 
@@ -98,9 +98,23 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 		return nil, fmt.Errorf("Failed to retrieve user saldo debit:", err)
 	}
 
+	//Hapus cache redis
+	err = handler.DeleteRedisKeysByPrefix(context.Background(), fmt.Sprintf("saldo_user_id_%d", req.From))
+	if err != nil {
+		log.Print("Failed to delete redis key:", err)
+		return nil, fmt.Errorf("Failed to delete redis key: %v", err)
+	}
+
+	err = handler.DeleteRedisKeysByPrefix(context.Background(), fmt.Sprintf("saldo_user_id_%d", req.To))
+	if err != nil {
+		log.Print("Failed to delete redis key:", err)
+		return nil, fmt.Errorf("Failed to delete redis key: %v", err)
+	}
+
 	historyCreditResponse := &pb.HistoryTransaction{
 		Id:              int32(historyCredit.Id),
 		UserIdFrom:      int32(historyCredit.UserIdFrom),
+		WalletId:        0,
 		UserIdTo:        int32(historyCredit.UserIdTo),
 		TypeTransaction: historyCredit.TypeTransaction,
 		TypeCredit:      historyCredit.TypeCredit,
@@ -111,6 +125,7 @@ func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.Transfer
 		Id:              int32(historyCredit.Id),
 		UserIdFrom:      int32(historyCredit.UserIdFrom),
 		UserIdTo:        int32(historyCredit.UserIdTo),
+		WalletId:        0,
 		TypeTransaction: historyDebit.TypeTransaction,
 		TypeCredit:      historyDebit.TypeCredit,
 		Total:           float32(historyCredit.Total),
@@ -174,7 +189,7 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 	err = handler.DeleteRedisKeysByPrefix(context.Background(), fmt.Sprintf("saldo_user_id_%d", req.Id))
 	if err != nil {
 		log.Print("Failed to delete redis key:", err)
-		return nil, fmt.Errorf("Failed to delete redis key: %v", err)	
+		return nil, fmt.Errorf("Failed to delete redis key: %v", err)
 	}
 
 	// Convert entity.UserSaldoHistory to *user_wallet.HistoryTransaction
@@ -353,20 +368,39 @@ func (handler *UserWalletHandler) DeleteWallet(ctx context.Context, req *pb.Dele
 }
 
 func (handler *UserWalletHandler) GetUserBalanceByWallet(ctx context.Context, req *pb.GetUserBalanceByWalletRequest) (*pb.GetUserBalanceByWalletResponse, error) {
-	walletId := req.WalletId
-	userId := req.UserId
+	walletId := int(req.WalletId)
+	userId := int(req.UserId)
 
-	// 	// 	// Ambil saldo saat ini dari tabel user_saldo
-	saldo := entity.UserSaldo{}
-	if err := handler.db.Table("user_saldos").Where("user_id = ? and  wallet_id = ?", userId, walletId).First(&saldo).Error; err != nil {
-		return nil, fmt.Errorf("Failed to retrieve user saldo:", err)
+	redisKey := fmt.Sprintf("saldo_user_id_%d_wallet_id_%d", userId, walletId)
+	var saldo float64
+
+	val, err := handler.rdb.Get(context.Background(), redisKey).Result()
+	if err == nil {
+		log.Println("data tersedia di redis untuk saldo_user_id_", userId, "_wallet_id_", walletId)
+		saldo, _ = strconv.ParseFloat(val, 64)
+	} else {
+		//Ambil saldo saat ini dari tabel user_saldo
+		if err := handler.db.Table("user_saldos").Select("saldo").Where("user_id = ? and wallet_id = ? ", userId, walletId).Scan(&saldo).Error; err != nil {
+			log.Println("Failed to retrieve user saldo:", err)
+		}
+
+		log.Println("user saldo:", saldo)
+
+		saldo = float64(saldo)
+		if err := handler.rdb.Set(context.Background(), redisKey, saldo, 0).Err(); err != nil {
+			log.Println("error when set redis key", redisKey)
+			return nil, fmt.Errorf("Failed to set redis key: %v", err)
+		} else {
+			log.Println("success set redis key", redisKey)
+		}
 	}
 
 	return &pb.GetUserBalanceByWalletResponse{
-		UserId:   int32(saldo.UserId),
-		WalletId: int32(saldo.WalletId),
-		Saldo:    float32(saldo.Saldo),
+		UserId:   int32(userId),
+		WalletId: int32(walletId),
+		Saldo:    float32(saldo),
 	}, nil
+
 }
 
 func (handler *UserWalletHandler) GetTransactionHistoryByWallet(ctx context.Context, req *pb.GetTransactionHistoryByWalletRequest) (*pb.GetTransactionHistoryByWalletResponse, error) {
@@ -501,6 +535,13 @@ func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpend
 		TypeTransaction: historyDebit.TypeTransaction,
 		TypeCredit:      historyDebit.TypeCredit,
 		Total:           float32(historyCredit.Total),
+	}
+
+	//Hapus cache redis
+	err = handler.DeleteRedisKeysByPrefix(context.Background(), fmt.Sprintf("saldo_user_id_%d", req.UserIdFrom))
+	if err != nil {
+		log.Print("Failed to delete redis key:", err)
+		return nil, fmt.Errorf("Failed to delete redis key: %v", err)
 	}
 
 	return &pb.GetSpendResponse{
