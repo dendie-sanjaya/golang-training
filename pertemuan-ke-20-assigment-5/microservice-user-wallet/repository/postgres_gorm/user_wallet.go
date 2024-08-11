@@ -6,14 +6,17 @@ import (
 	"log"
 	"praisindo/entity"
 	pb "praisindo/proto"
+	"strconv"
 
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
 type UserWalletHandler struct {
 	pb.UnimplementedUserWalletServiceServer
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func (handler *UserWalletHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
@@ -167,6 +170,13 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 		//return history, nil
 	}
 
+	//Hapus cache redis
+	err = handler.DeleteRedisKeysByPrefix(context.Background(), fmt.Sprintf("saldo_user_id_%d", req.Id))
+	if err != nil {
+		log.Print("Failed to delete redis key:", err)
+		return nil, fmt.Errorf("Failed to delete redis key: %v", err)	
+	}
+
 	// Convert entity.UserSaldoHistory to *user_wallet.HistoryTransaction
 	historyTransaction := &pb.HistoryTransaction{
 		Id:              int32(history.Id),
@@ -185,15 +195,34 @@ func (handler *UserWalletHandler) Topup(ctx context.Context, req *pb.TopupReques
 
 func (handler *UserWalletHandler) GetUserBalance(ctx context.Context, req *pb.GetUserBalanceRequest) (*pb.GetUserBalanceResponse, error) {
 
-	// 	// 	// Ambil saldo saat ini dari tabel user_saldo
-	saldo := entity.UserSaldo{}
-	if err := handler.db.Table("user_saldos").Where("user_id = ?", req.Id).First(&saldo).Error; err != nil {
-		//log.Fatal("Failed to retrieve user saldo:", err)
+	user_id := req.Id
+	redisKey := fmt.Sprintf("saldo_user_id_%d", req.Id)
+	var saldo float64
+
+	val, err := handler.rdb.Get(context.Background(), redisKey).Result()
+	if err == nil {
+		log.Println("data tersedia di redis untuk saldo_user_id_", user_id)
+		saldo, _ = strconv.ParseFloat(val, 64)
+	} else {
+		//Ambil saldo saat ini dari tabel user_saldo
+		if err := handler.db.Table("user_saldos").Select("SUM(saldo) as saldo").Where("user_id = ?", user_id).Scan(&saldo).Error; err != nil {
+			log.Println("Failed to retrieve user saldo:", err)
+		}
+
+		log.Println("user saldo:", saldo)
+
+		saldo = float64(saldo)
+		if err := handler.rdb.Set(context.Background(), redisKey, saldo, 0).Err(); err != nil {
+			log.Println("error when set redis key", redisKey)
+			return nil, fmt.Errorf("Failed to set redis key: %v", err)
+		} else {
+			log.Println("success set redis key", redisKey)
+		}
 	}
 
 	return &pb.GetUserBalanceResponse{
 		UserId: req.Id,
-		Saldo:  float32(saldo.Saldo),
+		Saldo:  float32(saldo),
 	}, nil
 }
 
@@ -481,6 +510,28 @@ func (handler *UserWalletHandler) GetSpend(ctx context.Context, req *pb.GetSpend
 		nil
 }
 
-func NewUserWalletHandler(db *gorm.DB) *UserWalletHandler {
-	return &UserWalletHandler{db: db}
+func NewUserWalletHandler(db *gorm.DB, rdb *redis.Client) *UserWalletHandler {
+	return &UserWalletHandler{
+		db:  db,
+		rdb: rdb,
+	}
+}
+
+// Fungsi untuk menghapus kunci Redis berdasarkan prefix
+func (handler *UserWalletHandler) DeleteRedisKeysByPrefix(ctx context.Context, prefix string) error {
+	// Dapatkan semua kunci dengan prefix tertentu
+	keys, err := handler.rdb.Keys(ctx, prefix+"*").Result()
+	if err != nil {
+		return err
+	}
+
+	// Hapus kunci-kunci yang ditemukan
+	if len(keys) > 0 {
+		if err := handler.rdb.Del(ctx, keys...).Err(); err != nil {
+			return err
+		}
+	}
+
+	log.Printf("Deleted %d keys with prefix %s", len(keys), prefix)
+	return nil
 }

@@ -10,6 +10,7 @@ import (
 	postgres_gorm "praisindo/repository/postgres_gorm"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -77,15 +78,14 @@ func main() {
 	}
 
 	//setup redis connection
-	/*
-		rdb := redis.NewClient(&redis.Options{
-			Addr:     config.RedisHost,
-			Password: config.RedisPassword, // no password set
-			DB:       config.RedisDatabase, // use default DB
-		})
-	*/
 
-	userWalletHandler := postgres_gorm.NewUserWalletHandler(gormDB)
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     config.RedisHost,
+		Password: config.RedisPassword, // no password set
+		DB:       config.RedisDatabase, // use default DB
+	})
+
+	userWalletHandler := postgres_gorm.NewUserWalletHandler(gormDB, rdb)
 
 	// Create a new context
 	//ctx := context.Background()
