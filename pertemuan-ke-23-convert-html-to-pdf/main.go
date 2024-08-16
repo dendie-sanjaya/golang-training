@@ -1,86 +1,68 @@
 package main
 
 import (
-	"bufio"
-	"context"
-	"encoding/json"
-	"errors"
+	"bytes"
 	"fmt"
-	"net/http"
-	"os"
-	"praisindo/entity"
-	"time"
+	"html/template"
+	"log"
+	"strings"
 
-	"golang.org/x/exp/slog"
+	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 )
 
 const (
-	basedir = ""
+	basedir      = "."
+	htmlTemplate = "static/template.html"
+	pdfOutput    = "static/output.pdf"
 )
 
-var (
-	httpClient *http.Client
-	logger     *slog.Logger
-)
-
-func main() {
-	ctx := context.Background()
-	startTime := time.Now()
-	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-
-	httpClient = &http.Client{Timeout: 10 * time.Second}
-
-	slog.InfoContext(ctx, "Start retrieving users data")
-	users, err := GetUsers(ctx)
-	if err != nil {
-		slog.WarnContext(ctx, "error when hit GetUsers", slog.Any("error", err))
-		return
-	}
-	slog.InfoContext(ctx, fmt.Sprintf("Finished retrieving users data %d collected", len(users)))
-
-	slog.InfoContext(ctx, "Start generating csv users")
-	reportFile, _ := os.Create(basedir + "/users.csv")
-	reportFileWriter := bufio.NewWriter(reportFile)
-	// cetak header file
-	_, _ = fmt.Fprintf(reportFileWriter, "ID,Name,Username,Email,Phone,Website\n")
-	_ = reportFileWriter.Flush()
-
-	for _, user := range users {
-		_, _ = fmt.Fprintf(reportFileWriter, "%d,%s,%s,%s,%s,%s\n",
-			user.ID, user.Name, user.Username, user.Email, user.Phone, user.Website)
-		_ = reportFileWriter.Flush()
-	}
-
-	slog.InfoContext(ctx, fmt.Sprintf("Finish generating csv users. Elapsed Time: %d ms", time.Since(startTime).Milliseconds()))
+type Invoice struct {
+	FullName      string
+	Name          string
+	Email         string
+	Phone         string
+	InvoiceNumber string
+	SubTotal      string
 }
 
-func GetUsers(ctx context.Context) ([]entity.User, error) {
-	const endpoint = "https://jsonplaceholder.typicode.com/users"
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+func main() {
+	template, err := template.ParseFiles(basedir + "/" + htmlTemplate)
 	if err != nil {
-		slog.WarnContext(ctx, "error when hit http.NewRequestWithContext", slog.Any("error", err))
-		return nil, err
+		log.Fatal(err)
+	}
+	buf := new(bytes.Buffer)
+	data := Invoice{
+		FullName:      "Fahmi Hidayat",
+		Name:          "Ibam",
+		Email:         "ibrahimker@gmail.com",
+		Phone:         "+1221412",
+		InvoiceNumber: "INC1049",
+		SubTotal:      "Rp.10.000.000,-",
+	}
+	if err := template.Execute(buf, data); err != nil {
+		log.Println(err)
 	}
 
-	res, err := httpClient.Do(httpReq)
+	// Create new PDF generator
+	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
-		slog.WarnContext(ctx, "error when hit httpClient.Do", slog.Any("error", err))
-		return nil, err
+		log.Fatal(err)
 	}
-	defer func() { _ = res.Body.Close() }()
-
-	if res.StatusCode != http.StatusOK {
-		errStatusCode := errors.New("not receiving status OK when hit API")
-		slog.WarnContext(ctx, errStatusCode.Error(), slog.Any("error", errStatusCode), slog.Any("res.StatusCode", res.StatusCode))
-		return nil, errStatusCode
+	// Create a new input page from an URL
+	page := wkhtmltopdf.NewPageReader(strings.NewReader(buf.String()))
+	// Add to document
+	pdfg.AddPage(page)
+	// Create PDF document in internal buffer
+	err = pdfg.Create()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Write buffer contents to file on disk
+	err = pdfg.WriteFile(basedir + "/" + pdfOutput)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	var users []entity.User
-	if err = json.NewDecoder(res.Body).Decode(&users); err != nil {
-		slog.WarnContext(ctx, "error when hit Decode(&users)", slog.Any("error", err))
-		return nil, err
-	}
-
-	return users, nil
+	fmt.Println("Done")
+	// Output: Done
 }
