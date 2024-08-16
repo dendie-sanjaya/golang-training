@@ -39,7 +39,7 @@ services:
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis:6379
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redispass
     depends_on:
