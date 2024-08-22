@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka_3.8.0
+    ports:
+      - 9092:9092
+
+  postgres_5452:
+    image: postgres
+    container_name: postgres_5452  
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    ports:
+      - 5452:5432
+    volumes:
+      - postgres_data_5452:/var/lib/postgresql/data     
+
+  postgres_5453:
+    image: postgres
+    container_name: postgres_5453   
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    ports:
+      - 5453:5432
+    volumes:
+      - postgres_data_5453:/var/lib/postgresql/data           
+
+  # app_consumer_1:
+  #   container_name: app_consumer_1
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.app_consumer_1 
+  #   image: app_consumer_1:latest
+  #   environment:
+  #     - POSTGRES_HOST=postgres_5452
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - REDIS_HOST=redis:6379
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=redispass
+  #   depends_on:
+  #     - postgres_5452
+
+  # app_consumer_2:
+  #   container_name: app_consumer_2
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.app_consumer_2 
+  #   image: app_consumer_2:latest
+  #   environment:
+  #     - POSTGRES_HOST=postgres_5453
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - REDIS_HOST=redis:6379
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=redispass
+  #   depends_on:
+  #     - postgres_5453    
+
+  # app_consumer_3:
+  #   container_name: app_consumer_3
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.app_consumer_3 
+  #   image: app_consumer_2:latest
+  #   environment:
+  #     - POSTGRES_HOST=postgres_5452
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - REDIS_HOST=redis:6379
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=redispass
+  #   depends_on:
+  #     - postgres_5453   
+
+  # app_producer:
+  #   container_name: app_producer
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.app_producer 
+  #   image: app_producer:latest
+  #   environment:
+  #     - POSTGRES_HOST=postgres_5452
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - REDIS_HOST=redis:6379
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=redispass
+  #   depends_on:
+  #     - postgres_5452   
+
+  
+volumes:
+  postgres_data_5452:
+  postgres_data_5453:
