@@ -4,34 +4,34 @@ FROM golang:1.22.4-alpine AS build
 # Set the working directory
 WORKDIR /app
 
-# Copy the go.mod and go.sum files
-COPY microservice-user-wallet/go.sum ./
+# # Copy the go.mod and go.sum files
+# COPY microservice-user-wallet/go.sum ./
 
-# Copy the go.mod and go.sum files
-COPY microservice-user-wallet/go.mod  ./
+# # Copy the go.mod and go.sum files
+# COPY microservice-user-wallet/go.mod  ./
 
-# Download all dependencies
-RUN go mod download
+# # Download all dependencies
+# RUN go mod download
 
-# Copy the source code
-COPY microservice-user-wallet/ ./
+# # Copy the source code
+# COPY microservice-user-wallet/ ./
 
-RUN go mod tidy
+# RUN go mod tidy
 
-# Build the Go application
-RUN CGO_ENABLED=0 GOOS=linux go build -o go-microservice-user-wallet .
+# # Build the Go application
+# RUN CGO_ENABLED=0 GOOS=linux go build -o go-microservice-user-wallet .
 
-# Stage 2: Final stage
-FROM alpine:edge
+# # Stage 2: Final stage
+# FROM alpine:edge
 
-# Set the working directory
-WORKDIR /app
+# # Set the working directory
+# WORKDIR /app
 
-# Copy the binary from the build stage
-COPY --from=build /app/go-microservice-user-wallet .
+# # Copy the binary from the build stage
+# COPY --from=build /app/go-microservice-user-wallet .
 
-# menambahkan ca-certificates
-RUN apk add --no-cache ca-certificates
+# # menambahkan ca-certificates
+# RUN apk add --no-cache ca-certificates
 
-# Set the entrypoint command
-CMD ["./go-microservice-user-wallet"]
+# # Set the entrypoint command
+# CMD ["./go-microservice-user-wallet"]
