@@ -7,13 +7,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"praisindo_consumer_1/config"
 	"praisindo_consumer_1/entity"
+	"praisindo_consumer_1/repository/postgres_gorm"
+	"strconv"
 	"sync"
 
 	"golang.org/x/exp/slog"
 
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // ============== HELPER FUNCTIONS ==============
@@ -49,7 +54,8 @@ func (ns *NotificationStore) Get(userID string) []entity.Notification {
 
 // ============== KAFKA RELATED FUNCTIONS ==============
 type Consumer struct {
-	store *NotificationStore
+	store       *NotificationStore
+	userHandler *UserNotifications // Tambahkan field userHandler
 }
 
 func (*Consumer) Setup(sarama.ConsumerGroupSession) error   { return nil }
@@ -66,8 +72,11 @@ func (consumer *Consumer) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 		}
 		slog.Info("Consuming notification and adding it to storage", slog.Any("notification", notification))
 		consumer.store.Add(userID, notification)
+		db_save(&notification)
+
 		sess.MarkMessage(msg, "")
 	}
+
 	return nil
 }
 
@@ -116,6 +125,8 @@ func handleNotifications(ctx *gin.Context, store *NotificationStore) {
 }
 
 func main() {
+	db_migrate()
+
 	store := &NotificationStore{
 		data: make(UserNotifications),
 	}
@@ -135,5 +146,77 @@ func main() {
 
 	if err := router.Run(entity.KafkaConsumerPort); err != nil {
 		log.Printf("failed to run the server: %v", err)
+	}
+}
+
+func db_migrate() {
+	// Setup gorm connection without selecting a database
+	dsn := "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " sslmode=" + config.PostgresSSLMode
+	//dsn := "postgresql://postgres:password@postgres:5434/postgres?sslmode=disable"
+	fmt.Println(dsn)
+	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
+	if err != nil {
+		log.Fatalln(err)
+	} else {
+		log.Println("Database connection established", config.PostgresHost, config.PostgressPort, config.PostgresSSLMode)
+	}
+
+	// Check if the database exists
+	var exists bool
+	err = gormDB.Raw("SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = ?)", config.PostgresDB).Scan(&exists).Error
+	if err != nil {
+		log.Fatalln(err)
+	} else {
+		log.Println("Database exists:", exists, config.PostgresDB)
+	}
+
+	// Create the database if it does not exist
+	if !exists {
+		err = gormDB.Exec("CREATE DATABASE " + config.PostgresDB).Error
+		if err != nil {
+			log.Fatalln(err)
+		} else {
+			log.Println("Database created successfully")
+		}
+	}
+	// Reconnect to the newly created database
+	dsn = "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " dbname= " + config.PostgresDB + " sslmode=" + config.PostgresSSLMode
+	gormDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Migrate the schema
+	err = gormDB.AutoMigrate(&entity.NotificationLog{})
+	if err != nil {
+		fmt.Println("Failed to migrate database schema notification log", err)
+	} else {
+		fmt.Println("Database schema migrated user")
+	}
+}
+
+func db_save(NotificationLog *entity.Notification) {
+	// Inisialisasi koneksi database
+	dsn := "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " dbname= " + config.PostgresDB + " sslmode=" + config.PostgresSSLMode
+	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// // Inisialisasi UserHandler
+	userHandler := postgres_gorm.UserHandler{Db: gormDB}
+
+	// Contoh notifikasi yang akan disimpan
+	logEntry := &entity.NotificationLog{
+		FromId:  strconv.Itoa(NotificationLog.From.ID),
+		ToId:    strconv.Itoa(NotificationLog.To.ID),
+		Message: NotificationLog.Message,
+	}
+
+	// // Simpan notifikasi ke database
+	if err := userHandler.SaveNotification(context.Background(), logEntry); err != nil {
+		log.Printf("failed to save notification log: %v", err)
+	} else {
+		log.Println("notification log saved successfully")
 	}
 }
