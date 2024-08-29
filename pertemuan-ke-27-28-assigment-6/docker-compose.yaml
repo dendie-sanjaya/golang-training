@@ -1,0 +1,85 @@
+version: "3.8"
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka_3.8.0
+    ports:
+      - 9092:9092
+      
+  redis:
+     image: redis:5.0.12
+     container_name: redis    
+     command: redis-server --requirepass redispass
+     ports:
+       - 6378:6379
+     # networks:
+     #   networktinyurl:
+     #     ipv4_address: 172.22.0.3  
+
+  postgres:
+    image: postgres
+    container_name: postgres   
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    ports:
+      - 5434:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data     
+    # command: -p 5434
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.4  
+
+  app_microservice_user_wallet:
+    container_name: microservice-user-wallet
+    build:
+      context: .
+      dockerfile: Dockerfile.microservice-user-wallet  
+    image: microservice-user-wallet:latest
+    ports:
+      - "50052:50052"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - REDIS_HOST=redis:6379
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redispass
+    depends_on:
+      - postgres
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.5  
+
+  app_microservice_user:
+    container_name: microservice-user
+    build:
+      context: .
+      dockerfile: Dockerfile.microservice-user  
+    image: microservice-user:latest
+    ports:
+      - "50051:50051"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password 
+   
+    depends_on:
+      - postgres
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.5  
+
+# networks:
+#   networktinyurl:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.22.0.0/16
+
+volumes:
+  postgres_data:

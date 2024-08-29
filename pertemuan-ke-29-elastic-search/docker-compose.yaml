@@ -1,0 +1,12 @@
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    hostname: es01
+    container_name: es01
+    ports:
+      - "9200:9200"
+    environment:
+      ELASTIC_PASSWORD: elastic
+      discovery.type: single-node
+      xpack.security.http.ssl.enabled: false
+      xpack.license.self_generated.type: trial

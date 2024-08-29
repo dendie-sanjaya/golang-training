@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+option go_package = "praisindo/proto;user_wallet";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+package proto.user_wallet_service.v1;
+
+service UserWalletService {
+  rpc Topup (TopupRequest) returns (TopupResponse) {
+    option (google.api.http) = {
+      get: "/v1/topup"
+    };
+  }
+  rpc Transfer (TransferRequest) returns (TransferResponse) {
+    option (google.api.http) = {
+      get: "/v1/transfer"
+    };
+  }
+  rpc GetUserBalance (GetUserBalanceRequest) returns (GetUserBalanceResponse) {
+    option (google.api.http) = {
+      post: "/v1/getUserBalance/{id}",
+      body: "*"
+    };
+  }
+  rpc GetTransactionHistory (GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse) {
+    option (google.api.http) = {
+      put: "/v1/getTransactionHistory",
+      body: "*"
+    };
+  }
+  rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/createWallet"
+    };
+  }  
+
+  rpc UpdateWallet (UpdateWalletRequest) returns (UpdateWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/updateWallet"
+    };
+  }  
+
+  rpc DeleteWallet (DeleteWalletRequest) returns (DeleteWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/deleteWallet"
+    };
+  }  
+
+  rpc GetUserBalanceByWallet (GetUserBalanceByWalletRequest) returns (GetUserBalanceByWalletResponse) {
+    option (google.api.http) = {
+      post: "/v1/getUserBalanceByWallet/{user_id}/{wallet_id}",
+      body: "*"
+    };
+  }  
+
+  rpc GetTransactionHistoryByWallet (GetTransactionHistoryByWalletRequest) returns (GetTransactionHistoryByWalletResponse) {
+    option (google.api.http) = {
+      put: "/v1/getTransactionHistoryByWallet",
+      body: "*"
+    };
+  } 
+
+  rpc GetSpend (GetSpendRequest) returns (GetSpendResponse) {
+    option (google.api.http) = {
+      put: "/v1/spend",
+      body: "*"
+    };
+  }  
+}
+
+message HistoryTransaction {
+  int32 id = 1;
+  int32 user_id_from = 2;
+  int32 user_id_to = 3;
+  int32 wallet_id = 4;
+  string type_transaction = 5;   
+  string type_credit = 6;
+  float total = 7;
+  google.protobuf.Timestamp created_at = 8; 
+}
+
+message TopupRequest {
+  int32 id = 1;
+  int32 wallet_id = 2;
+  float amount = 3;
+} 
+
+message TopupResponse {
+  HistoryTransaction history = 1;
+}
+
+message TransferRequest {
+  int32 id = 1;
+  int32 from = 2;
+  int32 to = 3;
+  float amount = 4;
+}
+
+message TransferResponse {
+  HistoryTransaction history1 = 1;
+  HistoryTransaction history2 = 2;
+  
+}
+
+message GetUserBalanceRequest {
+  int32 id = 1; // Menambahkan field id
+}
+
+message GetUserBalanceResponse {
+  int32 user_id = 1;
+  float saldo = 2;
+  google.protobuf.Timestamp created_at = 3; 
+}
+
+message GetTransactionHistoryRequest {
+  int32 user_id = 1;
+  int32 limit = 2;
+  string date_from = 3;
+  string date_to = 4;    
+}
+
+message GetTransactionHistoryResponse {
+  repeated HistoryTransaction history = 1;
+}
+
+message CreateWalletRequest {
+  int32 user_id = 1;
+  string type = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4; 
+}
+
+message CreateWalletResponse {
+  int32  user_id = 1;
+  int32  wallet_id = 2;
+  string type = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5; 
+}
+
+message UpdateWalletRequest {
+  int32 wallet_id = 1;
+  string type = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 7; 
+}
+
+message UpdateWalletResponse {
+  int32  user_id = 1;
+  int32  wallet_id = 2;
+  string type = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5; 
+}
+
+message DeleteWalletRequest {
+  int32  wallet_id = 1;
+}
+
+message DeleteWalletResponse {
+  int32  wallet_id = 1;
+}
+
+message GetUserBalanceByWalletRequest {
+  int32 user_id = 1;
+  float wallet_id = 2;
+}
+
+message GetUserBalanceByWalletResponse {
+  int32 user_id = 1;
+  int32 wallet_id = 2;  
+  float saldo = 3;
+}
+
+message GetTransactionHistoryByWalletRequest {
+  int32 user_id = 1;
+  int32 wallet_id = 2;
+  int32 limit = 3;
+  string date_from = 4;
+  string date_to = 5;
+}
+
+message GetTransactionHistoryByWalletResponse {
+  repeated HistoryTransaction history = 1;
+}
+
+message GetSpendRequest {
+  int32 user_id_from = 1;
+  int32 user_id_to = 2;
+  int32 wallet_id_from = 3;
+  int32 wallet_id_to = 4;
+  float amount = 5;
+}
+
+message GetSpendResponse {
+  HistoryTransaction history1 = 1;
+  HistoryTransaction history2 = 2;
+  
+}
