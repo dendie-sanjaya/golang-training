@@ -2,221 +2,115 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	"encoding/csv"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
 	"praisindo_consumer_1/config"
-	"praisindo_consumer_1/entity"
-	"praisindo_consumer_1/repository/postgres_gorm"
-	"strconv"
-	"sync"
-
-	"golang.org/x/exp/slog"
+	"syscall"
+	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-// ============== HELPER FUNCTIONS ==============
-var ErrNoMessagesFound = errors.New("no messages found")
+const (
+	basedir  = "."
+	fileName = "data.csv"
+)
 
-func getUserIDFromRequest(ctx *gin.Context) (string, error) {
-	userID := ctx.Param("userID")
-	if userID == "" {
-		return "", ErrNoMessagesFound
+func main() {
+	// Konfigurasi konsumer grup Kafka
+	configKakfa := sarama.NewConfig()
+	configKakfa.Consumer.Return.Errors = true
+	configKakfa.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+	configKakfa.Net.DialTimeout = 10 * time.Second
+	configKakfa.Net.ReadTimeout = 10 * time.Second
+	configKakfa.Net.WriteTimeout = 10 * time.Second
+
+	// Inisialisasi konsumer grup
+	brokers := []string{config.KafkaBroker}
+	topic := config.KafkaTopicTransfer
+	groupID := config.KafkaGroupID
+	consumerGroup, err := sarama.NewConsumerGroup(brokers, groupID, configKakfa)
+	if err != nil {
+		log.Fatalf("Failed to start consumer group: %v", err)
 	}
-	return userID, nil
-}
+	defer consumerGroup.Close()
 
-// ====== NOTIFICATION STORAGE ======
-type UserNotifications map[string][]entity.Notification
+	// Buat channel untuk menangani sinyal sistem
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-type NotificationStore struct {
-	data UserNotifications
-	mu   sync.RWMutex
-}
+	// Buat handler untuk konsumer grup
+	handler := &ConsumerGroupHandler{}
 
-func (ns *NotificationStore) Add(userID string, notification entity.Notification) {
-	ns.mu.Lock()
-	defer ns.mu.Unlock()
-	ns.data[userID] = append(ns.data[userID], notification)
-}
-
-func (ns *NotificationStore) Get(userID string) []entity.Notification {
-	ns.mu.RLock()
-	defer ns.mu.RUnlock()
-	return ns.data[userID]
-}
-
-// ============== KAFKA RELATED FUNCTIONS ==============
-type Consumer struct {
-	store       *NotificationStore
-	userHandler *UserNotifications // Tambahkan field userHandler
-}
-
-func (*Consumer) Setup(sarama.ConsumerGroupSession) error   { return nil }
-func (*Consumer) Cleanup(sarama.ConsumerGroupSession) error { return nil }
-
-func (consumer *Consumer) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		userID := string(msg.Key)
-		var notification entity.Notification
-		err := json.Unmarshal(msg.Value, &notification)
-		if err != nil {
-			log.Printf("failed to unmarshal notification: %v", err)
-			continue
+	// Konsumsi pesan dari topik
+	go func() {
+		for {
+			if err := consumerGroup.Consume(context.Background(), []string{topic}, handler); err != nil {
+				log.Fatalf("Error consuming messages: %v", err)
+			}
 		}
-		slog.Info("Consuming notification and adding it to storage", slog.Any("notification", notification))
-		consumer.store.Add(userID, notification)
-		db_save(&notification)
+	}()
 
-		sess.MarkMessage(msg, "")
+	// Tunggu sinyal sistem untuk keluar
+	<-signals
+	log.Println("Consumer stopped")
+}
+
+// ConsumerGroupHandler adalah handler untuk konsumer grup
+type ConsumerGroupHandler struct {
+	csvWriter *csv.Writer
+}
+
+// Setup dijalankan saat konsumer grup diinisialisasi
+func (h *ConsumerGroupHandler) Setup(sarama.ConsumerGroupSession) error {
+	// Buka atau buat file CSV
+	file, err := os.OpenFile("log.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
 	}
+
+	// Inisialisasi CSV writer
+	h.csvWriter = csv.NewWriter(file)
+
+	// Tulis header CSV jika file baru dibuat
+	/*
+		if fileInfo, err := file.Stat(); err == nil && fileInfo.Size() == 0 {
+			header := []string{}
+			if err := h.csvWriter.Write(header); err != nil {
+				return err
+			}
+			h.csvWriter.Flush()
+		}
+	*/
 
 	return nil
 }
 
-func setupConsumerGroup(ctx context.Context, store *NotificationStore) {
-	config := sarama.NewConfig()
-
-	consumerGroup, err := sarama.NewConsumerGroup([]string{entity.KafkaBrokerAddress}, entity.DefaultGroupID, config)
-	if err != nil {
-		log.Printf("initialization error: %v", err)
+// Cleanup dijalankan saat konsumer grup dihentikan
+func (h *ConsumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error {
+	if h.csvWriter != nil {
+		h.csvWriter.Flush()
 	}
-	defer consumerGroup.Close()
+	return nil
+}
 
-	consumer := &Consumer{
-		store: store,
-	}
+// ConsumeClaim menangani pesan yang dikonsumsi
+func (h *ConsumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		fmt.Printf("Consumed message: %s\n", string(msg.Value))
+		sess.MarkMessage(msg, "")
 
-	for {
-		err = consumerGroup.Consume(ctx, []string{entity.DefaultTopic}, consumer)
-		if err != nil {
-			log.Printf("error from consumer: %v", err)
+		// Tulis pesan ke file CSV
+		record := []string{string(msg.Value)}
+		if err := h.csvWriter.Write(record); err != nil {
+			log.Printf("Error writing to CSV: %v", err)
 		}
-		if ctx.Err() != nil {
-			return
-		}
+		h.csvWriter.Flush()
+
+		sess.MarkMessage(msg, "")
 	}
-}
-
-func handleNotifications(ctx *gin.Context, store *NotificationStore) {
-	userID, err := getUserIDFromRequest(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-		return
-	}
-
-	notes := store.Get(userID)
-	if len(notes) == 0 {
-		ctx.JSON(http.StatusOK,
-			gin.H{
-				"message":       "No notifications found for user",
-				"notifications": []entity.Notification{},
-			})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"notifications": notes})
-}
-
-func main() {
-	db_migrate()
-
-	store := &NotificationStore{
-		data: make(UserNotifications),
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go setupConsumerGroup(ctx, store)
-	defer cancel()
-
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
-	router.GET("/notifications/:userID", func(ctx *gin.Context) {
-		handleNotifications(ctx, store)
-	})
-
-	fmt.Printf("Kafka CONSUMER (Group: %s) 👥📥 "+
-		"started at http://localhost%s\n", entity.DefaultGroupID, entity.KafkaConsumerPort)
-
-	if err := router.Run(entity.KafkaConsumerPort); err != nil {
-		log.Printf("failed to run the server: %v", err)
-	}
-}
-
-func db_migrate() {
-	// Setup gorm connection without selecting a database
-	dsn := "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " sslmode=" + config.PostgresSSLMode
-	//dsn := "postgresql://postgres:password@postgres:5434/postgres?sslmode=disable"
-	fmt.Println(dsn)
-	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
-	if err != nil {
-		log.Fatalln(err)
-	} else {
-		log.Println("Database connection established", config.PostgresHost, config.PostgressPort, config.PostgresSSLMode)
-	}
-
-	// Check if the database exists
-	var exists bool
-	err = gormDB.Raw("SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = ?)", config.PostgresDB).Scan(&exists).Error
-	if err != nil {
-		log.Fatalln(err)
-	} else {
-		log.Println("Database exists:", exists, config.PostgresDB)
-	}
-
-	// Create the database if it does not exist
-	if !exists {
-		err = gormDB.Exec("CREATE DATABASE " + config.PostgresDB).Error
-		if err != nil {
-			log.Fatalln(err)
-		} else {
-			log.Println("Database created successfully")
-		}
-	}
-	// Reconnect to the newly created database
-	dsn = "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " dbname= " + config.PostgresDB + " sslmode=" + config.PostgresSSLMode
-	gormDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// Migrate the schema
-	err = gormDB.AutoMigrate(&entity.NotificationLog{})
-	if err != nil {
-		fmt.Println("Failed to migrate database schema notification log", err)
-	} else {
-		fmt.Println("Database schema migrated user")
-	}
-}
-
-func db_save(NotificationLog *entity.Notification) {
-	// Inisialisasi koneksi database
-	dsn := "host=" + config.PostgresHost + " port=" + config.PostgressPort + " user=" + config.PostgresUser + " password=" + config.PostgresPassword + " dbname= " + config.PostgresDB + " sslmode=" + config.PostgresSSLMode
-	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// // Inisialisasi UserHandler
-	userHandler := postgres_gorm.UserHandler{Db: gormDB}
-
-	// Contoh notifikasi yang akan disimpan
-	logEntry := &entity.NotificationLog{
-		FromId:  strconv.Itoa(NotificationLog.From.ID),
-		ToId:    strconv.Itoa(NotificationLog.To.ID),
-		Message: NotificationLog.Message,
-	}
-
-	// // Simpan notifikasi ke database
-	if err := userHandler.SaveNotification(context.Background(), logEntry); err != nil {
-		log.Printf("failed to save notification log: %v", err)
-	} else {
-		log.Println("notification log saved successfully")
-	}
+	return nil
 }
