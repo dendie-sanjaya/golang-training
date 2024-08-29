@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -54,9 +55,24 @@ func main() {
 		}
 	}()
 
+	go func() {
+		router := gin.Default()
+
+		// Tambahkan route untuk mengunduh file log.csv
+		router.GET("/download-log", func(c *gin.Context) {
+			filePath := "log.csv"
+			c.FileAttachment(filePath, "log.csv")
+		})
+
+		// Jalankan server pada port 8383
+		fmt.Println("API Server run in port", config.GinPort)
+		router.Run(config.GinPort)
+	}()
+
 	// Tunggu sinyal sistem untuk keluar
 	<-signals
 	log.Println("Consumer stopped")
+
 }
 
 // ConsumerGroupHandler adalah handler untuk konsumer grup

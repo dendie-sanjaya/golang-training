@@ -10,6 +10,7 @@ var (
 	KafkaBroker        = getEnv("KAFKA_BROKER", "localhost:9092")
 	KafkaGroupID       = getEnv("KAFKA_GROUP_ID", "user-group-1")
 	KafkaTopicTransfer = getEnv("KAFKA_TOPIC", "transaction_transfer")
+	GinPort            = getEnv("GIN_PORT", ":8383")
 )
 
 // getEnv reads an environment variable and returns its value or a default value if not set.
