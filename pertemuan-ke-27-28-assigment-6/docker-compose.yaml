@@ -2,19 +2,25 @@ version: "3.8"
 services:
   kafka:
     image: apache/kafka:3.8.0
-    container_name: kafka_3.8.0
+    container_name: kafka
     ports:
       - 9092:9092
+    # environment:
+    #   KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    # # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.3  
       
+         
   redis:
      image: redis:5.0.12
      container_name: redis    
      command: redis-server --requirepass redispass
      ports:
        - 6378:6379
-     # networks:
-     #   networktinyurl:
-     #     ipv4_address: 172.22.0.3  
+    #  networks:
+    #    networktinyurl:
+    #      ipv4_address: 172.22.0.4  
 
   postgres:
     image: postgres
@@ -30,7 +36,7 @@ services:
     # command: -p 5434
     # networks:
     #   networktinyurl:
-    #     ipv4_address: 172.22.0.4  
+    #     ipv4_address: 172.22.0.5  
 
   app_microservice_user_wallet:
     container_name: microservice-user-wallet
@@ -52,7 +58,7 @@ services:
       - postgres
     # networks:
     #   networktinyurl:
-    #     ipv4_address: 172.22.0.5  
+    #     ipv4_address: 172.22.0.6  
 
   app_microservice_user:
     container_name: microservice-user
@@ -74,12 +80,32 @@ services:
     #   networktinyurl:
     #     ipv4_address: 172.22.0.5  
 
+  app_microservice_report:
+    container_name: microservice-report
+    build:
+      context: .
+      dockerfile: Dockerfile.microservice-report 
+    image: microservice-report:latest
+    ports:
+      - "8383:8383"
+    environment: 
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_GROUP_ID=user-group-1
+      - KAFKA_TOPIC=transaction_transfer
+      - GIN_PORT=:8383
+    depends_on:
+      - kafka
+    # networks:
+    #   networktinyurl:
+    #     ipv4_address: 172.22.0.7  
+
+
 # networks:
-#   networktinyurl:
-#     driver: bridge
-#     ipam:
-#       config:
-#         - subnet: 172.22.0.0/16
+#    networktinyurl:
+#      driver: bridge
+#      ipam:
+#        config:
+#          - subnet: 172.22.0.0/16
 
 volumes:
   postgres_data:

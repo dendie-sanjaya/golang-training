@@ -21,6 +21,8 @@ const (
 )
 
 func main() {
+	fmt.Println("kafka broker", config.KafkaBroker)
+
 	// Konfigurasi konsumer grup Kafka
 	configKakfa := sarama.NewConfig()
 	configKakfa.Consumer.Return.Errors = true

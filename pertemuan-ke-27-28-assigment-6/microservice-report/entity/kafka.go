@@ -1,7 +1,7 @@
 package entity
 
 const (
-	KafkaBrokerAddress = "localhost:9092"
+	KafkaBrokerAddress = "172.20.0.2:9092"
 	KafkaProducerPort  = ":8080"
 	KafkaConsumerPort  = ":8081"
 	DefaultTopic       = "transaction_transfer"
